@@ -113,7 +113,7 @@ Single Gradle module (`:app`) for v1. Split into modules only if build times hur
 ## Conventions
 
 - Kotlin official style, enforced by ktlint (the `lint` task depends on `ktlintCheck`; `./gradlew ktlintFormat` auto-fixes). No `!!` outside tests.
-- Android lint runs with `warningsAsErrors`. Only the "newer version available" checks are disabled; upgrade deliberately.
+- Android lint runs with `warningsAsErrors`. Only the version-bump checks (`GradleDependency`, `AndroidGradlePluginVersion`, `NewerVersionAvailable`, `OldTargetApi`) are disabled, because their results depend on how new the machine's SDK is. Upgrade deliberately.
 - Coroutines: `viewModelScope` in ViewModels, and a service-scoped `CoroutineScope(SupervisorJob() + Dispatchers.Main)` cancelled in `onDestroy`. MediaStore queries run on `Dispatchers.IO`.
 - No business logic in composables, and no Android `Context` in ViewModels beyond what the repositories wrap.
 - Strings in `strings.xml`. English only for v1, but no hard-coded UI text, so pt-BR can be added later.
