@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import io.github.gativrek.momenta.ui.MomentaApp
+import io.github.gativrek.momenta.ui.screens.permission.PermissionGate
 import io.github.gativrek.momenta.ui.theme.MomentaTheme
 
 class MainActivity : ComponentActivity() {
@@ -15,7 +16,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MomentaTheme {
-                MomentaApp()
+                // Every tab reads the music library, so the whole app sits behind the permission.
+                PermissionGate {
+                    MomentaApp()
+                }
             }
         }
     }

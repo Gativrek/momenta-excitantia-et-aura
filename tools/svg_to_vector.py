@@ -10,8 +10,9 @@ stroke attributes, containing only <path d="..."> elements. Icons are line-only
 (fill="none"), so strokes are emitted with no fill.
 
 Outputs:
-  drawable/ic_nav_<name>.xml   24dp, black stroke (Compose's Icon tints it)
-  drawable/ic_launcher_foreground.xml   from songs.svg, centred in the
+  drawable/ic_<name>.xml   24dp, black stroke (Compose's Icon tints it)
+                           e.g. nav_songs.svg -> ic_nav_songs.xml
+  drawable/ic_launcher_foreground.xml   from nav_songs.svg, centred in the
                                         108dp adaptive-icon canvas
 """
 
@@ -24,7 +25,7 @@ SRC = ROOT / "design" / "icons"
 OUT = ROOT / "app" / "src" / "main" / "res" / "drawable"
 SVG_NS = "{http://www.w3.org/2000/svg}"
 
-LAUNCHER_SOURCE = "songs"
+LAUNCHER_SOURCE = "nav_songs"
 LAUNCHER_SCALE = 2.0  # 24 -> 48 units, well inside the 66dp safe zone
 
 
@@ -93,7 +94,7 @@ def launcher_foreground() -> str:
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     for svg in sorted(SRC.glob("*.svg")):
-        target = OUT / f"ic_nav_{svg.stem}.xml"
+        target = OUT / f"ic_{svg.stem}.xml"
         target.write_text(nav_icon(svg.stem), encoding="utf-8", newline="\n")
         print(f"wrote {target.relative_to(ROOT)}")
     target = OUT / "ic_launcher_foreground.xml"

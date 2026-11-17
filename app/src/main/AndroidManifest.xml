@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!--
-        No INTERNET permission, ever (KICKOFF.md ground rule 4).
-        Audio/foreground-service permissions arrive with Phases 1 and 2.
-    -->
+    <!-- No INTERNET permission, ever (KICKOFF.md ground rule 4). -->
+
+    <!-- Read the music library: READ_MEDIA_AUDIO on Android 13+, the old storage permission below. -->
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
 
     <application
         android:name=".App"

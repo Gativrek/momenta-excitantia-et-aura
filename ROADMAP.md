@@ -13,12 +13,12 @@ Each phase ends in something runnable. A phase is done when its checkboxes are t
 - [x] App icon placeholder, light/dark theme with dynamic color on Android 12+
 
 ### Phase 1: Library
-- [ ] Runtime permission flow (`READ_MEDIA_AUDIO` / `READ_EXTERNAL_STORAGE`) with a rationale screen and a denied state
-- [ ] `MediaStoreSource`: query `IS_MUSIC != 0` audio and map rows to a `Track` domain model
-- [ ] Folder path via `RELATIVE_PATH` (API 29+) and the `DATA` fallback (API 26–28)
-- [ ] `ContentObserver` to refresh the library when MediaStore changes
-- [ ] Album art loading via Coil (`loadThumbnail` on API 29+, album-art URI below)
-- [ ] Songs list screen (flat, sorted by title)
+- [x] Runtime permission flow (`READ_MEDIA_AUDIO` / `READ_EXTERNAL_STORAGE`) with a rationale screen and a denied state
+- [x] `MediaStoreSource`: query `IS_MUSIC != 0` audio and map rows to a `Track` domain model
+- [x] Folder path via `RELATIVE_PATH` (API 29+) and the `DATA` fallback (API 26–28)
+- [x] `ContentObserver` to refresh the library when MediaStore changes
+- [x] Album art loading via Coil (`loadThumbnail` on API 29+, album-art URI below)
+- [x] Songs list screen (flat, sorted by title)
 
 ### Phase 2: Playback core
 - [ ] `PlaybackService : MediaSessionService` holding one ExoPlayer

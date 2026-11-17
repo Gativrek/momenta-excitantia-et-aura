@@ -66,6 +66,12 @@ Single Gradle module (`:app`) for v1. Split into modules only if build times hur
 - **Album art:** API 29+ uses `ContentResolver.loadThumbnail(uri, size, null)`. Below that, use `content://media/external/audio/albumart/{albumId}`. Wrap both in a Coil fetcher or a single `artworkModel(track)` function.
 - **Permissions:** `READ_MEDIA_AUDIO` on 33+, and `READ_EXTERNAL_STORAGE` with `maxSdkVersion="32"` below. Android 14's "partial access" applies to photos and video only, not audio.
 - Register a `ContentObserver` on the audio URI and debounce re-queries (~500 ms).
+- **As built (Phase 1):**
+  - `Track` is pure Kotlin (no `Uri`), so library logic stays JVM-testable. Get the playable URI with `track.contentUri()`. Raw-column parsing (unknown tags, disc/track split, folder paths, sort order) lives in `TrackFields` and is unit-tested.
+  - `LibraryRepository.tracks` loads at once on first collect and reloads after a debounced burst of changes. It is shared app-wide (`shareIn`, kept for 5 s after the last collector), so tabs don't re-query.
+  - Songs sort by title, skipping leading punctuation ("... And Justice" files under A), with a `Collator` at secondary strength: case-insensitive, accents count, ties broken by ID.
+  - Album art: `ArtworkFetcher` (a Coil 3 fetcher) handles both API branches. `ArtworkKeyer` caches per track on 29+ (untagged files share a folder-named album ID but each has its own cover) and per album below 29. Coil is added **without** any `coil-network-*` module.
+  - Permission: `PermissionGate` wraps the whole app. It re-checks on every resume and, after two denials, switches from the system dialog to "Open settings".
 
 ### Playback (Media3)
 - Manifest: the service gets `android:foregroundServiceType="mediaPlayback"` and an intent filter for `androidx.media3.session.MediaSessionService`. Permissions: `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK` (required on 34+) and `WAKE_LOCK`.
@@ -105,7 +111,7 @@ Single Gradle module (`:app`) for v1. Split into modules only if build times hur
 
 ### Graphics
 - **Line icons only** (stroke, no fill: 24×24, stroke width 2, round caps and joins). No emojis anywhere in the UI or resources.
-- **SVG is the source of truth for every graphic.** Sources live in `design/icons/*.svg`. `python tools/svg_to_vector.py` regenerates the VectorDrawables in `res/drawable/` (`ic_nav_*` and the launcher foreground). Never hand-edit the generated XML. The script supports only `<path>` elements, so write circles as two arcs.
+- **SVG is the source of truth for every graphic.** Sources live in `design/icons/*.svg`. `python tools/svg_to_vector.py` regenerates the VectorDrawables in `res/drawable/`: `<name>.svg` becomes `ic_<name>.xml` (e.g. `nav_songs.svg` → `ic_nav_songs`), and `nav_songs.svg` also produces the launcher foreground. Never hand-edit the generated XML. The script supports only `<path>` elements, so write circles as two arcs.
 
 ### Backup
 - No cloud backup, ever (the data never leaves the phone). `data_extraction_rules.xml` excludes everything from cloud backup but allows direct device-to-device transfer on Android 12+. `backup_rules.xml` excludes everything on 8–11, which can't tell the two apart.

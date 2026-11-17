@@ -9,4 +9,23 @@
     <string name="nav_playlists">Playlists</string>
 
     <string name="placeholder_coming_soon">Nothing here yet. This screen arrives in a later phase.</string>
+
+    <!-- Permission -->
+    <string name="permission_title">Let Momenta find your music</string>
+    <string name="permission_body">Momenta plays the audio files already on this phone. It needs permission to read them. Nothing ever leaves your device: the app has no internet access.</string>
+    <string name="permission_denied_body">Access was denied. Open the app\'s settings, tap Permissions, and allow Music and audio.</string>
+    <string name="permission_grant">Allow access</string>
+    <string name="permission_open_settings">Open settings</string>
+
+    <!-- Library -->
+    <string name="unknown_artist">Unknown artist</string>
+    <string name="unknown_album">Unknown album</string>
+    <!-- Subtitle under a track title: artist, then album. -->
+    <string name="track_subtitle">%1$s · %2$s</string>
+    <plurals name="song_count">
+        <item quantity="one">%d song</item>
+        <item quantity="other">%d songs</item>
+    </plurals>
+    <string name="songs_empty_title">No music found</string>
+    <string name="songs_empty_body">Copy audio files to this phone, for example into the Music folder, and they\'ll appear here.</string>
 </resources>

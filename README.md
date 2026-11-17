@@ -25,13 +25,13 @@ No streaming, no accounts, no network permission. It finds the music on your dev
 | Concern | Choice |
 |---|---|
 | Language | Kotlin |
-| UI | Jetpack Compose + Material 3 |
+| UI | Jetpack Compose + Material 3, Lifecycle ViewModel |
 | Navigation | Navigation Compose |
 | Playback | Jetpack Media3 (ExoPlayer + MediaSessionService) |
 | Library source | Android MediaStore |
 | Persistence | Room (playlists), DataStore (settings and playback state) |
 | Async | Kotlin Coroutines + Flow |
-| Images | Coil |
+| Images | Coil 3 (core only, no network module) |
 | DI | Manual (constructor injection via an `AppContainer`) |
 | Build | Gradle (Kotlin DSL) + version catalog, ktlint, Android lint |
 
