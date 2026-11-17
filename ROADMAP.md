@@ -5,12 +5,12 @@ Each phase ends in something runnable. A phase is done when its checkboxes are t
 ## v1.0: "Plays my library"
 
 ### Phase 0: Scaffold
-- [ ] Android project: Kotlin, Compose, Material 3, Gradle version catalog
-- [ ] `minSdk 26`, `compileSdk`/`targetSdk` = latest stable
-- [ ] Package `io.github.gativrek.momenta`, app label "Momenta Excitantia et Aura"
-- [ ] Package structure per KICKOFF.md, `AppContainer` for manual DI
-- [ ] ktlint (or detekt) and a GitHub Actions workflow running `./gradlew lint test assembleDebug`
-- [ ] App icon placeholder, light/dark theme with dynamic color on Android 12+
+- [x] Android project: Kotlin, Compose, Material 3, Gradle version catalog
+- [x] `minSdk 26`, `compileSdk`/`targetSdk` = latest stable
+- [x] Package `io.github.gativrek.momenta`, app label "Momenta Excitantia et Aura"
+- [x] Package structure per KICKOFF.md, `AppContainer` for manual DI
+- [x] ktlint (or detekt) and a GitHub Actions workflow running `./gradlew lint test assembleDebug`
+- [x] App icon placeholder, light/dark theme with dynamic color on Android 12+
 
 ### Phase 1: Library
 - [ ] Runtime permission flow (`READ_MEDIA_AUDIO` / `READ_EXTERNAL_STORAGE`) with a rationale screen and a denied state
