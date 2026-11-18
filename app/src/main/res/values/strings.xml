@@ -130,6 +130,43 @@
         <item quantity="other">%d songs couldn\'t be saved and were left as they were</item>
     </plurals>
 
+    <!-- Moments: the part of a song that hits -->
+    <string name="moment_save">Save this Moment</string>
+    <string name="moment_saved">Moment saved</string>
+    <string name="moment_save_failed">Couldn\'t save the Moment</string>
+    <string name="moment_adjust">Adjust</string>
+    <string name="moment_gear_title">Moment settings</string>
+    <!-- %d is the Moment's number within the song, for unnamed Moments. -->
+    <string name="moment_number">Moment %d</string>
+    <string name="moment_name">Name</string>
+    <string name="moment_name_hint">e.g. the final chorus</string>
+    <!-- %1$s start, %2$s end (like 7:40.0), %3$s length (like 16.0 s). -->
+    <string name="moment_range">%1$s – %2$s · %3$s</string>
+    <string name="moment_start">Start</string>
+    <string name="moment_end">End</string>
+    <string name="moment_now">Now</string>
+    <string name="moment_preview">Play from the run-up</string>
+    <!-- %s is a length like 8.0 s. -->
+    <string name="moment_run_up">Run-up: %s</string>
+    <string name="moment_run_up_hint">How much of the build-up plays first when you jump to this Moment</string>
+    <string name="moment_boost_off">Volume boost: off</string>
+    <!-- %d is a percentage, up to 30. -->
+    <string name="moment_boost">Volume boost: +%d%%</string>
+    <string name="moment_boost_hint">Louder while the Moment plays, easing in and out</string>
+    <string name="moment_boost_disabled">Volume boosts are off for all Moments</string>
+    <string name="moment_boost_chill">Chill mode is on: no boosts until you turn it off</string>
+    <string name="moment_boosts_all">Volume boosts</string>
+    <string name="moment_boosts_all_hint">For every Moment</string>
+    <string name="moment_heard_never">Not heard all the way through yet</string>
+    <plurals name="moment_heard">
+        <item quantity="one">Heard all the way through %d time</item>
+        <item quantity="other">Heard all the way through %d times</item>
+    </plurals>
+    <string name="moment_delete">Delete</string>
+    <string name="action_jump_to_moment">Jump to the Moment</string>
+    <string name="chill_on">Chill mode on: no boosts or Moment effects. Tap to turn off</string>
+    <string name="chill_off">Chill mode: turn off boosts and Moment effects</string>
+
     <!-- Playback errors. %s is the track title. -->
     <string name="unknown_track">Unknown track</string>
     <string name="error_track_missing">Skipped \"%s\": the file is gone.</string>

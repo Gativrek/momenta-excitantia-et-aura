@@ -4,10 +4,12 @@ import android.app.PendingIntent
 import android.content.ContentUris
 import android.content.Intent
 import android.os.Bundle
+import android.os.SystemClock
 import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.OptIn
+import androidx.core.content.ContextCompat
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -16,6 +18,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.ShuffleOrder.DefaultShuffleOrder
+import androidx.media3.session.CommandButton
 import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
@@ -24,16 +27,19 @@ import androidx.media3.session.SessionError
 import androidx.media3.session.SessionResult
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.SettableFuture
 import io.github.gativrek.momenta.App
 import io.github.gativrek.momenta.MainActivity
 import io.github.gativrek.momenta.R
 import io.github.gativrek.momenta.data.library.Track
+import io.github.gativrek.momenta.data.listening.PlayEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.random.Random
@@ -46,13 +52,15 @@ import kotlin.random.Random
  * MediaSessionService handles the foreground-service lifecycle and the media notification
  * for us: it goes foreground while playing and drops back when paused.
  *
- * Also home to what must outlive the UI: the sleep timer and saving/restoring the queue.
+ * Also home to what must outlive the UI: the sleep timer, saving/restoring the queue and the
+ * listening log.
  */
 @OptIn(UnstableApi::class) // ExoPlayer shuffle order and notification icon
 class PlaybackService : MediaSessionService() {
     private var mediaSession: MediaSession? = null
     private lateinit var player: QueuePlayer
     private lateinit var sleepTimer: SleepTimer
+    private lateinit var momentEngine: MomentEngine
 
     /** Main-thread scope for player work; cancelled in onDestroy. */
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -61,6 +69,11 @@ class PlaybackService : MediaSessionService() {
     /** False until the saved queue has been restored, so an empty player never overwrites it. */
     private var restored = false
     private var periodicSave: Job? = null
+
+    /** The library as last seen, to name what was listened to. */
+    private var library: Map<Long, Track> = emptyMap()
+    private val playTracker =
+        PlayTracker(SystemClock::elapsedRealtime, System::currentTimeMillis) { listen -> record(listen) }
 
     @OptIn(UnstableApi::class) // DefaultMediaNotificationProvider.setSmallIcon
     override fun onCreate() {
@@ -96,11 +109,20 @@ class PlaybackService : MediaSessionService() {
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
             )
 
+        // Save a Moment from the media notification and lock screen: Moments happen with the phone in a pocket.
+        val saveMomentButton =
+            CommandButton
+                .Builder(CommandButton.ICON_UNDEFINED)
+                .setCustomIconResId(R.drawable.ic_moment)
+                .setDisplayName(getString(R.string.moment_save))
+                .setSessionCommand(SessionProtocol.SAVE_MOMENT)
+                .build()
         val session =
             MediaSession
                 .Builder(this, player)
                 .setSessionActivity(openApp)
                 .setCallback(SessionCallback())
+                .setMediaButtonPreferences(listOf(saveMomentButton))
                 .build()
         mediaSession = session
 
@@ -108,6 +130,19 @@ class PlaybackService : MediaSessionService() {
             SleepTimer(exoPlayer, scope) { state ->
                 session.setSessionExtras(SessionProtocol.sleepTimerToExtras(state))
             }
+        momentEngine =
+            MomentEngine(
+                exo = exoPlayer,
+                scope = scope,
+                momentsOf = { id ->
+                    container.momentsRepository.byTrack.value[id]
+                        .orEmpty()
+                },
+                boostsActive = { container.momentsSettings.settings.value.boostsActive },
+                onHeard = { moment ->
+                    container.applicationScope.launch { container.momentsRepository.countHeard(moment.id) }
+                },
+            )
         exoPlayer.addListener(PlayerEvents())
 
         setMediaNotificationProvider(
@@ -118,6 +153,7 @@ class PlaybackService : MediaSessionService() {
 
         restoreQueue()
         followLibrary()
+        followMoments()
     }
 
     /** Every controller (our UI, System UI, Bluetooth) gets the same session. */
@@ -138,8 +174,10 @@ class PlaybackService : MediaSessionService() {
     }
 
     override fun onDestroy() {
+        playTracker.flush()
         saveQueue()
         sleepTimer.cancel()
+        momentEngine.release()
         scope.cancel()
         mediaSession?.run {
             player.release()
@@ -155,7 +193,10 @@ class PlaybackService : MediaSessionService() {
      */
     private fun followLibrary() {
         scope.launch {
-            container.libraryRepository.tracks.collect { tracks -> refreshQueue(tracks.associateBy { it.id }) }
+            container.libraryRepository.tracks.collect { tracks ->
+                library = tracks.associateBy { it.id }
+                refreshQueue(library)
+            }
         }
     }
 
@@ -185,6 +226,54 @@ class PlaybackService : MediaSessionService() {
         } else {
             // Same audio, new tags: swapped in place without interrupting playback.
             updates.forEach { (i, item) -> exo.replaceMediaItem(i, item) }
+        }
+    }
+
+    /** New or edited Moments, or the boost switches, take effect on the playing song at once. */
+    private fun followMoments() {
+        scope.launch {
+            combine(container.momentsRepository.byTrack, container.momentsSettings.settings) { _, _ -> }
+                .collect { momentEngine.refresh() }
+        }
+    }
+
+    /** A Moment around the current position of the current track; completes with its ID, or null. */
+    private fun saveMoment(): ListenableFuture<Long?> {
+        val result = SettableFuture.create<Long?>()
+        val track = player.currentMediaItem?.let(MediaItemMapper::trackId)?.let(library::get)
+        if (track == null) {
+            result.set(null)
+            return result
+        }
+        val position = player.currentPosition
+        container.applicationScope.launch {
+            try {
+                result.set(container.momentsRepository.saveAt(track, position).id)
+            } catch (e: Exception) {
+                Log.w(TAG, "Couldn't save a Moment", e)
+                result.set(null)
+            }
+        }
+        return result
+    }
+
+    /** Into the listening log. Application scope: a listen flushed in onDestroy is still written. */
+    private fun record(listen: Listen) {
+        val track = library[listen.trackId] ?: return
+        val play =
+            PlayEntity(
+                songId = 0,
+                startedAt = listen.startedAt,
+                listenedMs = listen.listenedMs,
+                completed = listen.completed,
+            )
+        container.applicationScope.launch {
+            try {
+                container.database.listeningDao().record(track, play)
+            } catch (e: Exception) {
+                // History is a nice-to-have: never let it disturb playback.
+                Log.w(TAG, "Couldn't record a listen", e)
+            }
         }
     }
 
@@ -279,6 +368,28 @@ class PlaybackService : MediaSessionService() {
     private inner class PlayerEvents : Player.Listener {
         override fun onPlayerError(error: PlaybackException) = skipUnplayable(error)
 
+        override fun onMediaItemTransition(
+            mediaItem: MediaItem?,
+            reason: Int,
+        ) {
+            val completed =
+                reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO ||
+                    reason == Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT
+            playTracker.onTrackChanged(mediaItem?.let(MediaItemMapper::trackId), completed, player.isPlaying)
+            momentEngine.refresh()
+        }
+
+        override fun onIsPlayingChanged(isPlaying: Boolean) {
+            playTracker.onPlayingChanged(isPlaying, player.currentMediaItem?.let(MediaItemMapper::trackId))
+            momentEngine.refresh()
+        }
+
+        override fun onAudioSessionIdChanged(audioSessionId: Int) = momentEngine.onAudioSessionIdChanged()
+
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            if (playbackState == Player.STATE_ENDED) playTracker.onEnded()
+        }
+
         override fun onEvents(
             player: Player,
             events: Player.Events,
@@ -309,6 +420,18 @@ class PlaybackService : MediaSessionService() {
             session: MediaSession,
             controller: MediaSession.ControllerInfo,
         ): MediaSession.ConnectionResult {
+            if (session.isMediaNotificationController(controller)) {
+                // The notification (and through it the lock screen and System UI) gets the Moment button.
+                val commands =
+                    MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS
+                        .buildUpon()
+                        .add(SessionProtocol.SAVE_MOMENT)
+                        .build()
+                return MediaSession.ConnectionResult
+                    .AcceptedResultBuilder(session)
+                    .setAvailableSessionCommands(commands)
+                    .build()
+            }
             if (controller.packageName != packageName) return super.onConnect(session, controller)
             val commands =
                 MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS
@@ -347,9 +470,33 @@ class PlaybackService : MediaSessionService() {
                         finishTrack = args.getBoolean(SessionProtocol.ARG_FINISH_TRACK),
                     )
                 SessionProtocol.CANCEL_SLEEP_TIMER.customAction -> sleepTimer.cancel()
+                SessionProtocol.SAVE_MOMENT.customAction -> {
+                    // From our UI the screen shows what happened; from the notification, a toast says so.
+                    val fromNotification = session.isMediaNotificationController(controller)
+                    return Futures.transform(
+                        saveMoment(),
+                        { id -> momentResult(id, fromNotification) },
+                        ContextCompat.getMainExecutor(this@PlaybackService),
+                    )
+                }
                 else -> return Futures.immediateFuture(SessionResult(SessionError.ERROR_NOT_SUPPORTED))
             }
             return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
+        }
+
+        private fun momentResult(
+            id: Long?,
+            toast: Boolean,
+        ): SessionResult {
+            if (toast) {
+                val message = if (id != null) R.string.moment_saved else R.string.moment_save_failed
+                Toast.makeText(this@PlaybackService, message, Toast.LENGTH_SHORT).show()
+            }
+            if (id == null) return SessionResult(SessionError.ERROR_UNKNOWN)
+            return SessionResult(
+                SessionResult.RESULT_SUCCESS,
+                Bundle().apply { putLong(SessionProtocol.RESULT_MOMENT_ID, id) },
+            )
         }
 
         /**

@@ -1,22 +1,40 @@
 package io.github.gativrek.momenta.data.playlists
 
 import android.content.Context
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import io.github.gativrek.momenta.data.listening.ListeningDao
+import io.github.gativrek.momenta.data.listening.PlayEntity
+import io.github.gativrek.momenta.data.listening.SongEntity
+import io.github.gativrek.momenta.data.moments.MomentEntity
+import io.github.gativrek.momenta.data.moments.MomentsDao
 
 /**
- * The app's only database: playlists. The library itself is never copied here
+ * The app's only database: playlists, listening history and Moments. The library itself is never copied here
  * (MediaStore is the source of truth). Schemas are exported to app/schemas/ so every
  * future version ships with a real migration, never a destructive one.
  */
 @Database(
-    entities = [PlaylistEntity::class, PlaylistEntryEntity::class],
-    version = 1,
+    entities = [
+        PlaylistEntity::class,
+        PlaylistEntryEntity::class,
+        SongEntity::class,
+        PlayEntity::class,
+        MomentEntity::class,
+    ],
+    version = 3,
     exportSchema = true,
+    // New tables only, so Room derives each migration. 2: listening history (songs, plays). 3: moments.
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3)],
 )
 abstract class MomentaDatabase : RoomDatabase() {
     abstract fun playlistDao(): PlaylistDao
+
+    abstract fun listeningDao(): ListeningDao
+
+    abstract fun momentsDao(): MomentsDao
 
     companion object {
         fun create(context: Context): MomentaDatabase =

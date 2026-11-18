@@ -24,13 +24,20 @@ object SessionProtocol {
 
     val CANCEL_SLEEP_TIMER = SessionCommand(PREFIX + "CANCEL_SLEEP_TIMER", Bundle.EMPTY)
 
-    val ALL = listOf(PLAY_NEXT, ADD_TO_QUEUE, MOVE, SET_SLEEP_TIMER, CANCEL_SLEEP_TIMER)
+    /**
+     * Saves a Moment at the current position of the current track. Also the button in the media
+     * notification. Our UI gets the new Moment's ID back in the result extras ([RESULT_MOMENT_ID]).
+     */
+    val SAVE_MOMENT = SessionCommand(PREFIX + "SAVE_MOMENT", Bundle.EMPTY)
+
+    val ALL = listOf(PLAY_NEXT, ADD_TO_QUEUE, MOVE, SET_SLEEP_TIMER, CANCEL_SLEEP_TIMER, SAVE_MOMENT)
 
     const val ARG_ITEMS = "items"
     const val ARG_FROM = "from"
     const val ARG_TO = "to"
     const val ARG_DURATION_MS = "duration_ms"
     const val ARG_FINISH_TRACK = "finish_track"
+    const val RESULT_MOMENT_ID = "moment_id"
 
     // Session extras: the sleep timer's state, pushed to every controller.
     private const val EXTRA_SLEEP_END = PREFIX + "SLEEP_END_ELAPSED"

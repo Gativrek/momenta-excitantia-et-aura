@@ -11,6 +11,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionCommand
+import androidx.media3.session.SessionResult
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
 import io.github.gativrek.momenta.data.library.Artwork
@@ -22,7 +23,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.concurrent.ExecutionException
+import kotlin.coroutines.resume
 
 /** What the UI shows about the current track. */
 data class NowPlaying(
@@ -164,15 +167,16 @@ class PlayerConnection(
      */
     fun shuffleTracks(tracks: List<Track>) = playTracks(tracks.shuffled(), 0)
 
-    /** Replace the queue with [tracks] and start playing at [startIndex]. */
+    /** Replace the queue with [tracks] and start playing at [startIndex], [startPositionMs] into it. */
     fun playTracks(
         tracks: List<Track>,
         startIndex: Int = 0,
+        startPositionMs: Long = 0L,
     ) {
         if (tracks.isEmpty()) return
         val items = tracks.map(MediaItemMapper::toMediaItem)
         withController {
-            it.setMediaItems(items, startIndex.coerceIn(tracks.indices), 0L)
+            it.setMediaItems(items, startIndex.coerceIn(tracks.indices), startPositionMs)
             it.prepare()
             it.play()
         }
@@ -272,6 +276,24 @@ class PlayerConnection(
         if (tracks.isEmpty()) return
         val bundles = tracks.mapTo(ArrayList()) { MediaItemMapper.toMediaItem(it).toBundle() }
         send(command, Bundle().apply { putParcelableArrayList(SessionProtocol.ARG_ITEMS, bundles) })
+    }
+
+    /**
+     * Saves a Moment at the current position (the service knows it exactly). Returns the new
+     * Moment's ID, or null if there was nothing playing or it couldn't be saved.
+     */
+    suspend fun saveMoment(): Long? {
+        val current = controller ?: return null
+        val result =
+            suspendCancellableCoroutine<SessionResult?> { cont ->
+                val future = current.sendCustomCommand(SessionProtocol.SAVE_MOMENT, Bundle.EMPTY)
+                future.addListener(
+                    { cont.resume(runCatching { future.get() }.getOrNull()) },
+                    ContextCompat.getMainExecutor(appContext),
+                )
+            } ?: return null
+        if (result.resultCode != SessionResult.RESULT_SUCCESS) return null
+        return result.extras.getLong(SessionProtocol.RESULT_MOMENT_ID, -1).takeIf { it >= 0 }
     }
 
     private fun send(

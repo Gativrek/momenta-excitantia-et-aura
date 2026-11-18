@@ -1,7 +1,12 @@
 package io.github.gativrek.momenta.ui.screens.nowplaying
 
 import androidx.annotation.DrawableRes
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,10 +16,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
@@ -29,7 +37,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -37,11 +49,22 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.Player
 import io.github.gativrek.momenta.R
+import io.github.gativrek.momenta.data.moments.MomentEntity
+import io.github.gativrek.momenta.data.settings.MomentsSettings
 import io.github.gativrek.momenta.playback.PlayerUiState
 import io.github.gativrek.momenta.ui.components.ArtworkImage
 import io.github.gativrek.momenta.ui.components.PlayPauseButton
 import io.github.gativrek.momenta.ui.components.SkipButton
 import io.github.gativrek.momenta.ui.format.formatDuration
+import io.github.gativrek.momenta.ui.screens.moments.FieryTitle
+import io.github.gativrek.momenta.ui.screens.moments.HeavenlyLight
+import io.github.gativrek.momenta.ui.screens.moments.LocalMomentGlow
+import io.github.gativrek.momenta.ui.screens.moments.MomentGearSheet
+import io.github.gativrek.momenta.ui.screens.moments.momentAura
+import kotlinx.coroutines.delay
+
+/** What the lightning-gear opens on: a Moment's ID, or the song's first Moment. */
+private const val GEAR_FIRST = -1L
 
 @Composable
 fun NowPlayingScreen(
@@ -51,7 +74,9 @@ fun NowPlayingScreen(
     modifier: Modifier = Modifier,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val position by viewModel.position.collectAsStateWithLifecycle(initialValue = 0L)
+    val position by viewModel.finePosition.collectAsStateWithLifecycle(initialValue = 0L)
+    val moments by viewModel.currentMoments.collectAsStateWithLifecycle()
+    val settings by viewModel.settings.collectAsStateWithLifecycle()
 
     // Nothing left to show (queue cleared, or service gone): close instead of an empty screen.
     LaunchedEffect(state.connected, state.nowPlaying) {
@@ -59,10 +84,23 @@ fun NowPlayingScreen(
     }
 
     var showSleepTimer by rememberSaveable { mutableStateOf(false) }
+    var gearFor by rememberSaveable { mutableStateOf<Long?>(null) }
+    var justSaved by remember { mutableStateOf<Long?>(null) }
+
+    // The "Moment saved" note offers the lightning-gear for a few seconds, then goes.
+    LaunchedEffect(justSaved) {
+        if (justSaved != null) {
+            delay(SAVED_NOTE_MS)
+            justSaved = null
+        }
+    }
 
     NowPlayingContent(
         state = state,
         positionMs = position,
+        moments = moments,
+        settings = settings,
+        justSavedMoment = justSaved != null,
         onCollapse = onCollapse,
         onTogglePlayPause = viewModel::togglePlayPause,
         onPrevious = viewModel::previous,
@@ -72,6 +110,12 @@ fun NowPlayingScreen(
         onCycleRepeat = viewModel::cycleRepeat,
         onOpenSleepTimer = { showSleepTimer = true },
         onOpenQueue = onOpenQueue,
+        onSaveMoment = { viewModel.saveMoment { id -> justSaved = id } },
+        onOpenGear = {
+            gearFor = justSaved ?: GEAR_FIRST
+            justSaved = null
+        },
+        onToggleChill = { viewModel.setChill(!settings.chill) },
         modifier = modifier,
     )
 
@@ -83,12 +127,32 @@ fun NowPlayingScreen(
             onDismiss = { showSleepTimer = false },
         )
     }
+    gearFor?.let { target ->
+        MomentGearSheet(
+            moments = moments,
+            initialMomentId = target.takeIf { it != GEAR_FIRST },
+            durationMs = state.durationMs,
+            positionMs = position,
+            settings = settings,
+            onSave = viewModel::updateMoment,
+            onDelete = { moment ->
+                viewModel.deleteMoment(moment)
+                if (moments.size <= 1) gearFor = null
+            },
+            onPreview = viewModel::previewMoment,
+            onBoostsChange = viewModel::setBoosts,
+            onDismiss = { gearFor = null },
+        )
+    }
 }
 
 @Composable
 fun NowPlayingContent(
     state: PlayerUiState,
     positionMs: Long,
+    moments: List<MomentEntity>,
+    settings: MomentsSettings,
+    justSavedMoment: Boolean,
     onCollapse: () -> Unit,
     onTogglePlayPause: () -> Unit,
     onPrevious: () -> Unit,
@@ -98,57 +162,104 @@ fun NowPlayingContent(
     onCycleRepeat: () -> Unit,
     onOpenSleepTimer: () -> Unit,
     onOpenQueue: () -> Unit,
+    onSaveMoment: () -> Unit,
+    onOpenGear: () -> Unit,
+    onToggleChill: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val nowPlaying = state.nowPlaying
-    // Transparent: the theme's backdrop is the Now Playing background.
-    Surface(modifier = modifier.fillMaxSize(), color = Color.Transparent) {
+    val spark = MaterialTheme.colorScheme.tertiary
+
+    // 0 → 1 as a Moment starts, back to 0 as it ends; every reaction follows this one value.
+    val glow by LocalMomentGlow.current
+
+    // Transparent: the theme's backdrop is the Now Playing background, brightened during a Moment.
+    Surface(modifier = modifier.fillMaxSize().momentAura(glow, spark), color = Color.Transparent) {
         Column(
             // No systemBarsPadding here: the root Scaffold already pads its content for the bars.
             modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Row(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
                 IconButton(onClick = onCollapse) {
                     Icon(
                         painter = painterResource(R.drawable.ic_collapse),
                         contentDescription = stringResource(R.string.action_collapse),
                     )
                 }
+                IconButton(onClick = onToggleChill) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_chill),
+                        contentDescription =
+                            stringResource(
+                                if (settings.chill) R.string.chill_on else R.string.chill_off,
+                            ),
+                        tint = if (settings.chill) MaterialTheme.colorScheme.primary else LocalContentColor.current,
+                    )
+                }
             }
 
             // Square art filling the width. BoxWithConstraints gives the real width, so the
-            // thumbnail is requested at display size instead of a guess.
+            // thumbnail is requested at display size instead of a guess. During a Moment it
+            // rises a little into a heavenly light.
             Spacer(Modifier.height(16.dp))
-            BoxWithConstraints(modifier = Modifier.fillMaxWidth().aspectRatio(1f)) {
-                ArtworkImage(artwork = nowPlaying?.artwork, size = maxWidth)
+            BoxWithConstraints(
+                modifier = Modifier.fillMaxWidth().aspectRatio(1f),
+                contentAlignment = Alignment.Center,
+            ) {
+                val coverSize = maxWidth
+                HeavenlyLight(glow = glow, color = spark, modifier = Modifier.requiredSize(coverSize * LIGHT_SCALE))
+                Box(
+                    Modifier.graphicsLayer {
+                        val scale = 1f + COVER_RISE * glow
+                        scaleX = scale
+                        scaleY = scale
+                    },
+                ) {
+                    ArtworkImage(artwork = nowPlaying?.artwork, size = coverSize)
+                }
             }
 
             Spacer(Modifier.height(32.dp))
-            Text(
-                text = nowPlaying?.title.orEmpty(),
-                style = MaterialTheme.typography.headlineSmall,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            Text(
-                text =
-                    stringResource(
-                        R.string.track_subtitle,
-                        nowPlaying?.artist ?: stringResource(R.string.unknown_artist),
-                        nowPlaying?.album ?: stringResource(R.string.unknown_album),
-                    ),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-            )
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    FieryTitle(
+                        text = nowPlaying?.title.orEmpty(),
+                        glow = glow,
+                        style = MaterialTheme.typography.headlineSmall,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Text(
+                        text =
+                            stringResource(
+                                R.string.track_subtitle,
+                                nowPlaying?.artist ?: stringResource(R.string.unknown_artist),
+                                nowPlaying?.album ?: stringResource(R.string.unknown_album),
+                            ),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                    )
+                }
+                IconButton(onClick = onSaveMoment, modifier = Modifier.size(56.dp)) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_moment),
+                        contentDescription = stringResource(R.string.moment_save),
+                        tint = if (moments.isNotEmpty()) spark else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(32.dp),
+                    )
+                }
+            }
 
             SeekBar(
                 positionMs = positionMs,
                 durationMs = state.durationMs,
+                moments = moments,
                 onSeek = onSeek,
                 modifier = Modifier.padding(top = 24.dp),
             )
@@ -211,6 +322,9 @@ fun NowPlayingContent(
             }
 
             Spacer(Modifier.weight(1f))
+            AnimatedVisibility(visible = justSavedMoment, enter = fadeIn(), exit = fadeOut()) {
+                SavedNote(onOpenGear)
+            }
             Row(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -226,6 +340,21 @@ fun NowPlayingContent(
                         modifier = Modifier.padding(start = ButtonDefaults.IconSpacing),
                     )
                 }
+                if (moments.isNotEmpty()) {
+                    TextButton(onClick = onOpenGear) {
+                        Icon(
+                            painterResource(R.drawable.ic_moment_gear),
+                            contentDescription = stringResource(R.string.moment_gear_title),
+                            tint = spark,
+                            modifier = Modifier.size(ButtonDefaults.IconSize),
+                        )
+                        Text(
+                            text = moments.size.toString(),
+                            color = spark,
+                            modifier = Modifier.padding(start = ButtonDefaults.IconSpacing),
+                        )
+                    }
+                }
                 TextButton(onClick = onOpenQueue) {
                     Icon(
                         painterResource(R.drawable.ic_queue),
@@ -237,6 +366,33 @@ fun NowPlayingContent(
                         modifier = Modifier.padding(start = ButtonDefaults.IconSpacing),
                     )
                 }
+            }
+        }
+    }
+}
+
+/** Right after ⚡: the Moment is saved, and the lightning-gear is one tap away. */
+@Composable
+private fun SavedNote(onOpenGear: () -> Unit) {
+    Surface(
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.tertiaryContainer,
+        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+        modifier = Modifier.padding(bottom = 8.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 16.dp)) {
+            Icon(painterResource(R.drawable.ic_moment), contentDescription = null, modifier = Modifier.size(18.dp))
+            Text(stringResource(R.string.moment_saved), modifier = Modifier.padding(start = 8.dp))
+            TextButton(onClick = onOpenGear) {
+                Icon(
+                    painterResource(R.drawable.ic_moment_gear),
+                    contentDescription = null,
+                    modifier = Modifier.size(ButtonDefaults.IconSize),
+                )
+                Text(
+                    stringResource(R.string.moment_adjust),
+                    modifier = Modifier.padding(start = ButtonDefaults.IconSpacing),
+                )
             }
         }
     }
@@ -260,19 +416,22 @@ private fun ModeButton(
 }
 
 /**
- * Slider over the track. While the user drags, it shows the drag position and the player
- * keeps playing; the seek is sent once, on release, instead of on every pixel.
+ * Slider over the track, with the song's Moments marked under it in the spark colour. While
+ * the user drags, it shows the drag position and the player keeps playing; the seek is sent
+ * once, on release, instead of on every pixel.
  */
 @Composable
 private fun SeekBar(
     positionMs: Long,
     durationMs: Long,
+    moments: List<MomentEntity>,
     onSeek: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var dragFraction by remember { mutableStateOf<Float?>(null) }
     val duration = durationMs.coerceAtLeast(1)
     val fraction = dragFraction ?: (positionMs.toFloat() / duration).coerceIn(0f, 1f)
+    val spark = MaterialTheme.colorScheme.tertiary
 
     Column(modifier = modifier.fillMaxWidth()) {
         Slider(
@@ -284,6 +443,23 @@ private fun SeekBar(
             },
             enabled = durationMs > 0,
         )
+        if (moments.isNotEmpty() && durationMs > 0) {
+            Canvas(Modifier.fillMaxWidth().height(4.dp)) {
+                // Material's slider track is inset by half its thumb on each side.
+                val inset = 10.dp.toPx()
+                val track = size.width - inset * 2
+                moments.forEach { m ->
+                    val start = inset + track * (m.startMs.toFloat() / duration).coerceIn(0f, 1f)
+                    val end = inset + track * (m.endMs.toFloat() / duration).coerceIn(0f, 1f)
+                    drawRoundRect(
+                        color = spark,
+                        topLeft = Offset(start, 0f),
+                        size = Size((end - start).coerceAtLeast(size.height), size.height),
+                        cornerRadius = CornerRadius(size.height / 2),
+                    )
+                }
+            }
+        }
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             TimeLabel((fraction * duration).toLong())
             TimeLabel(durationMs)
@@ -299,3 +475,9 @@ private fun TimeLabel(ms: Long) {
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }
+
+private const val SAVED_NOTE_MS = 6_000L
+
+/** How much the cover rises during a Moment, and how far the light spills past it. */
+private const val COVER_RISE = 0.07f
+private const val LIGHT_SCALE = 1.45f

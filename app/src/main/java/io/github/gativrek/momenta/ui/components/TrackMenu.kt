@@ -20,6 +20,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import io.github.gativrek.momenta.R
 import io.github.gativrek.momenta.data.library.Track
+import io.github.gativrek.momenta.ui.screens.moments.LocalMomentActions
 import io.github.gativrek.momenta.ui.screens.playlists.AddToPlaylistDialog
 import io.github.gativrek.momenta.ui.screens.tags.EditTrackTagsDialog
 
@@ -29,7 +30,7 @@ class QueueActions(
     val addToQueue: (Track) -> Unit,
 )
 
-/** Three-dot button with "Play next", "Add to queue", "Add to playlist" and "Edit tags". */
+/** Three-dot button with "Jump to the Moment" (songs with one), "Play next", "Add to queue", "Add to playlist" and "Edit tags". */
 @Composable
 fun TrackMenuButton(
     track: Track,
@@ -39,6 +40,7 @@ fun TrackMenuButton(
     var addingToPlaylist by remember { mutableStateOf(false) }
     var editingTags by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val moments = LocalMomentActions.current
     Box {
         IconButton(onClick = { open = true }) {
             Icon(
@@ -48,6 +50,12 @@ fun TrackMenuButton(
             )
         }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            if (moments.momentsOf(track).isNotEmpty()) {
+                MenuItem(R.string.action_jump_to_moment, R.drawable.ic_moment) {
+                    open = false
+                    moments.jumpToMoment(track)
+                }
+            }
             MenuItem(R.string.action_play_next, R.drawable.ic_play_next) {
                 open = false
                 actions.playNext(track)

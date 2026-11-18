@@ -2,19 +2,29 @@ package io.github.gativrek.momenta.ui.theme
 
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.hypot
@@ -30,47 +40,82 @@ private const val MAX_PATTERN_ALPHA = 0.32f
 /** At full aura the top glow starts at this opacity. */
 private const val MAX_AURA_ALPHA = 0.42f
 
+/** During a Moment the pattern grows this much brighter (on top of its own strength)… */
+private const val MOMENT_PATTERN_BOOST = 1.4f
+
+/** …shifts this far towards the theme's spark color… */
+private const val MOMENT_TINT = 0.65f
+
+/** …and swells by up to this much from the screen's center, breathing once per [PULSE_SECONDS]. */
+private const val MOMENT_SWELL = 0.035f
+private const val PULSE_SECONDS = 1.6f
+
+/** The aura (both glows) rises by this much during a Moment, even in themes with no aura. */
+private const val MOMENT_AURA = 0.75f
+
 /**
  * The themed backdrop: background color, the aura glow, then the pattern. Its own graphics
  * layer, so scrolling a list over it replays the recorded drawing instead of redrawing it;
  * the paths themselves are only rebuilt when the size or the theme changes.
+ *
+ * [glow] (0–1) is the Moment reaction: the aura brightens, the pattern lights up in the
+ * spark color and breathes. Only read while drawing, so it never recomposes the screens.
  */
 @Composable
 fun ThemeBackdrop(
     spec: ThemeSpec,
     modifier: Modifier = Modifier,
+    glow: () -> Float = { 0f },
 ) {
-    Spacer(modifier = modifier.graphicsLayer().themeBackdrop(spec))
+    // A clock for the breathing, running only while a Moment's reaction is showing.
+    val reacting by remember(glow) { derivedStateOf { glow() > 0f } }
+    var seconds by remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(reacting) {
+        if (!reacting) return@LaunchedEffect
+        val start = withFrameNanos { it }
+        while (true) {
+            withFrameNanos { seconds = (it - start) / 1e9f }
+        }
+    }
+    Spacer(modifier = modifier.graphicsLayer().themeBackdrop(spec, glow) { seconds })
 }
 
-fun Modifier.themeBackdrop(spec: ThemeSpec): Modifier =
+fun Modifier.themeBackdrop(
+    spec: ThemeSpec,
+    glow: () -> Float = { 0f },
+    seconds: () -> Float = { 0f },
+): Modifier =
     drawWithCache {
         val marks = buildPattern(spec.pattern, size, density)
         val auraTop =
             Brush.radialGradient(
-                colors = listOf(spec.accent.copy(alpha = spec.aura * MAX_AURA_ALPHA), spec.accent.copy(alpha = 0f)),
+                colors = listOf(spec.accent, spec.accent.copy(alpha = 0f)),
                 center = Offset(size.width * 0.5f, -size.height * 0.04f),
                 radius = max(size.width, size.height) * 0.7f,
             )
         val auraBottom =
             Brush.radialGradient(
-                colors =
-                    listOf(
-                        spec.spark.copy(alpha = spec.aura * MAX_AURA_ALPHA * 0.5f),
-                        spec.spark.copy(alpha = 0f),
-                    ),
+                colors = listOf(spec.spark, spec.spark.copy(alpha = 0f)),
                 center = Offset(size.width * 1.05f, size.height * 1.02f),
                 radius = size.width * 0.95f,
             )
-        val patternAlpha = spec.patternStrength * MAX_PATTERN_ALPHA
         onDrawBehind {
+            val g = glow().coerceIn(0f, 1f)
+            // 0 → 1 → 0 once per pulse, starting from rest.
+            val breath = if (g > 0f) 0.5f - 0.5f * cos(seconds() * 2f * PI.toFloat() / PULSE_SECONDS) else 0f
             drawRect(spec.background)
-            if (spec.aura > 0f) {
-                drawRect(auraTop)
-                drawRect(auraBottom)
+            val aura = min(1f, spec.aura + MOMENT_AURA * g * (0.8f + 0.2f * breath))
+            if (aura > 0f) {
+                drawRect(auraTop, alpha = aura * MAX_AURA_ALPHA)
+                drawRect(auraBottom, alpha = aura * MAX_AURA_ALPHA * 0.5f)
             }
-            if (patternAlpha > 0f) {
-                marks.forEach { it.draw(this, spec, patternAlpha) }
+            val strength = spec.patternStrength * (1f + MOMENT_PATTERN_BOOST * g * (0.75f + 0.25f * breath))
+            val patternAlpha = strength * MAX_PATTERN_ALPHA
+            if (patternAlpha > 0f && marks.isNotEmpty()) {
+                val color = lerp(spec.patternColor, spec.spark, MOMENT_TINT * g)
+                scale(1f + MOMENT_SWELL * g * breath) {
+                    marks.forEach { it.draw(this, color, patternAlpha) }
+                }
             }
         }
     }
@@ -83,11 +128,11 @@ private class Mark(
 ) {
     fun draw(
         scope: DrawScope,
-        spec: ThemeSpec,
+        color: Color,
         patternAlpha: Float,
     ) {
         val style = strokeWidth?.let { Stroke(width = it, cap = StrokeCap.Round, join = StrokeJoin.Miter) } ?: Fill
-        scope.drawPath(path, color = spec.patternColor, alpha = (patternAlpha * alpha).coerceIn(0f, 1f), style = style)
+        scope.drawPath(path, color = color, alpha = (patternAlpha * alpha).coerceIn(0f, 1f), style = style)
     }
 }
 

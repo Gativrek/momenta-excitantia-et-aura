@@ -5,9 +5,11 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.preferencesDataStoreFile
 import io.github.gativrek.momenta.data.library.LibraryRepository
 import io.github.gativrek.momenta.data.library.MediaStoreSource
+import io.github.gativrek.momenta.data.moments.MomentsRepository
 import io.github.gativrek.momenta.data.playlists.MomentaDatabase
 import io.github.gativrek.momenta.data.playlists.PlaylistRepository
 import io.github.gativrek.momenta.data.settings.AppearanceStore
+import io.github.gativrek.momenta.data.settings.MomentsSettingsStore
 import io.github.gativrek.momenta.data.tags.TagWriter
 import io.github.gativrek.momenta.playback.PlaybackStateStore
 import io.github.gativrek.momenta.playback.PlayerConnection
@@ -59,6 +61,20 @@ class AppContainer(
         PlaylistRepository(database.playlistDao(), libraryRepository, applicationScope)
     }
 
+    /** Every Moment, matched to the library's current files. */
+    val momentsRepository: MomentsRepository by lazy {
+        MomentsRepository(database.momentsDao(), database.listeningDao(), libraryRepository, applicationScope)
+    }
+
+    val momentsSettings: MomentsSettingsStore by lazy {
+        MomentsSettingsStore(
+            PreferenceDataStoreFactory.create(scope = applicationScope + Dispatchers.IO) {
+                appContext.preferencesDataStoreFile(MOMENTS_SETTINGS_FILE)
+            },
+            scope = applicationScope,
+        )
+    }
+
     /** Writes tags into music files (and repairs an interrupted write at startup). */
     val tagWriter: TagWriter by lazy { TagWriter(appContext) }
 
@@ -78,6 +94,7 @@ class AppContainer(
     private companion object {
         /** Also named in the backup rules (res/xml), which exclude it. */
         const val PLAYBACK_STATE_FILE = "playback_state"
+        const val MOMENTS_SETTINGS_FILE = "moments_settings"
 
         /** Backed up like any setting: a theme is worth keeping on a new phone. */
         const val APPEARANCE_FILE = "appearance"

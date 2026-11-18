@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated from design/icons/moment_gear.svg by tools/svg_to_vector.py. Edit the SVG, not this file. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:pathData="M17.64 11.81L19 10H12L13 2L4 14H11L10 22L11.96 19.39"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M20.6 18A2.6 2.6 0 1 1 15.4 18A2.6 2.6 0 1 1 20.6 18Z"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M20.6 18H21.8M19.3 20.3L19.9 21.3M16.7 20.3L16.1 21.3M15.4 18H14.2M16.7 15.7L16.1 14.7M19.3 15.7L19.9 14.7"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

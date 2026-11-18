@@ -13,6 +13,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.gativrek.momenta.ui.MomentaApp
+import io.github.gativrek.momenta.ui.screens.moments.LocalMomentGlow
+import io.github.gativrek.momenta.ui.screens.moments.MomentsHost
 import io.github.gativrek.momenta.ui.screens.permission.PermissionGate
 import io.github.gativrek.momenta.ui.screens.tags.TagEditorHost
 import io.github.gativrek.momenta.ui.theme.MomentaTheme
@@ -45,13 +47,17 @@ class MainActivity : ComponentActivity() {
                 enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
             }
             MomentaTheme(spec) {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    // The pattern sits behind every screen; screens are transparent over it.
-                    ThemeBackdrop(spec, Modifier.fillMaxSize())
-                    // Every tab reads the music library, so the whole app sits behind the permission.
-                    PermissionGate {
-                        TagEditorHost {
-                            MomentaApp()
+                MomentsHost {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        // The pattern sits behind every screen; screens are transparent over it.
+                        // It lights up during a Moment, whichever screen is open.
+                        val glow = LocalMomentGlow.current
+                        ThemeBackdrop(spec, Modifier.fillMaxSize(), glow = { glow.value })
+                        // Every tab reads the music library, so the whole app sits behind the permission.
+                        PermissionGate {
+                            TagEditorHost {
+                                MomentaApp()
+                            }
                         }
                     }
                 }

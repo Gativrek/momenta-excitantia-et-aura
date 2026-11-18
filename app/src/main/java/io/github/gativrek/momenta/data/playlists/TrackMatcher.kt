@@ -1,6 +1,7 @@
 package io.github.gativrek.momenta.data.playlists
 
 import io.github.gativrek.momenta.data.library.Track
+import io.github.gativrek.momenta.data.listening.SongEntity
 import kotlin.math.abs
 
 /**
@@ -30,14 +31,27 @@ class TrackMatcher(
                 return Match.Found(track, relinked = drifted)
             }
         }
-        byPathAndName[entry.relativePath to entry.displayName]?.let { return Match.Found(it, relinked = true) }
-        byName[entry.displayName]
-            ?.firstOrNull {
-                abs(it.durationMs - entry.durationMs) <= DURATION_TOLERANCE_MS &&
-                    it.sizeBytes == entry.sizeBytes
-            }?.let { return Match.Found(it, relinked = true) }
-        return Match.Missing
+        return moved(entry.relativePath, entry.displayName, entry.durationMs, entry.sizeBytes)
+            ?.let { Match.Found(it, relinked = true) }
+            ?: Match.Missing
     }
+
+    /** The file a song row (listening log, Moments) points at now, by the same rules, or null if it's gone. */
+    fun find(song: SongEntity): Track? =
+        byId[song.mediaStoreId]?.takeIf { it.displayName == song.displayName }
+            ?: moved(song.relativePath, song.displayName, song.durationMs, song.sizeBytes)
+
+    /** Rules 2 and 3: same folder and name, or same name, duration and size. */
+    private fun moved(
+        relativePath: String,
+        displayName: String,
+        durationMs: Long,
+        sizeBytes: Long,
+    ): Track? =
+        byPathAndName[relativePath to displayName]
+            ?: byName[displayName]?.firstOrNull {
+                abs(it.durationMs - durationMs) <= DURATION_TOLERANCE_MS && it.sizeBytes == sizeBytes
+            }
 
     sealed interface Match {
         data class Found(
