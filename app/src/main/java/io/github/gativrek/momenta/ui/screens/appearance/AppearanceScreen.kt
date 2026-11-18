@@ -38,11 +38,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -176,6 +178,7 @@ fun AppearanceScreen(
                     }
                 }
             }
+            item { AppSignature() }
         }
     }
 
@@ -382,5 +385,34 @@ private fun LabeledSlider(
             )
         }
         Slider(value = value, onValueChange = onValueChange)
+    }
+}
+
+/** The app's full name and version, quietly at the end of the list. */
+@Composable
+private fun AppSignature() {
+    val context = LocalContext.current
+    val version =
+        remember {
+            runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull()
+        }
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(top = 40.dp, bottom = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        MomentaLogo(size = 40.dp)
+        Text(
+            text = stringResource(R.string.app_full_name),
+            style = MaterialTheme.typography.titleMedium,
+            fontStyle = FontStyle.Italic,
+            modifier = Modifier.padding(top = 8.dp),
+        )
+        version?.let {
+            Text(
+                text = stringResource(R.string.app_version, it),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }

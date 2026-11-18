@@ -1,10 +1,12 @@
 package io.github.gativrek.momenta.ui
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -28,6 +30,7 @@ import androidx.navigation.compose.rememberNavController
 import io.github.gativrek.momenta.R
 import io.github.gativrek.momenta.ui.components.MiniPlayer
 import io.github.gativrek.momenta.ui.navigation.APPEARANCE_ROUTE
+import io.github.gativrek.momenta.ui.navigation.MOMENTS_ROUTE
 import io.github.gativrek.momenta.ui.navigation.MomentaNavHost
 import io.github.gativrek.momenta.ui.navigation.NOW_PLAYING_ROUTE
 import io.github.gativrek.momenta.ui.navigation.QUEUE_ROUTE
@@ -36,6 +39,7 @@ import io.github.gativrek.momenta.ui.navigation.TopLevelDestination
 import io.github.gativrek.momenta.ui.screens.NavArgs
 import io.github.gativrek.momenta.ui.screens.nowplaying.PlayerViewModel
 import io.github.gativrek.momenta.ui.screens.permission.rememberNotificationPermissionRequest
+import io.github.gativrek.momenta.ui.theme.moment
 
 /**
  * Root composable: the five library tabs, with the mini-player sitting on top of the
@@ -48,8 +52,8 @@ fun MomentaApp() {
     val currentDestination = backStackEntry?.destination
     // Now Playing, the queue and Appearance are full-screen: no mini-player, no tabs.
     val fullScreen = currentDestination?.route in setOf(NOW_PLAYING_ROUTE, QUEUE_ROUTE, APPEARANCE_ROUTE)
-    // Search keeps the mini-player (you start music from it) but not the tabs.
-    val showTabs = !fullScreen && currentDestination?.route != SEARCH_ROUTE
+    // Search and Moments keep the mini-player (you start music from them) but not the tabs.
+    val showTabs = !fullScreen && currentDestination?.route !in setOf(SEARCH_ROUTE, MOMENTS_ROUTE)
     // The tab whose root list is showing, if any: it gets a title bar with the search button.
     // Detail screens have their own top bar. Folders use one route for every level, root = "".
     val tabRoot =
@@ -70,13 +74,16 @@ fun MomentaApp() {
                 TabTopBar(
                     title = stringResource(tabRoot.labelRes),
                     onSearch = { navController.navigate(SEARCH_ROUTE) { launchSingleTop = true } },
+                    onMoments = { navController.navigate(MOMENTS_ROUTE) { launchSingleTop = true } },
                     onAppearance = { navController.navigate(APPEARANCE_ROUTE) { launchSingleTop = true } },
                 )
             }
         },
         bottomBar = {
             if (!fullScreen) {
-                Column {
+                // Without the tab bar (Search, Your Moments) nothing else keeps the mini-player
+                // clear of the system navigation bar.
+                Column(modifier = if (showTabs) Modifier else Modifier.navigationBarsPadding()) {
                     MiniPlayerSlot(
                         playerViewModel = playerViewModel,
                         onExpand = { navController.navigate(NOW_PLAYING_ROUTE) { launchSingleTop = true } },
@@ -100,11 +107,19 @@ fun MomentaApp() {
 private fun TabTopBar(
     title: String,
     onSearch: () -> Unit,
+    onMoments: () -> Unit,
     onAppearance: () -> Unit,
 ) {
     TopAppBar(
         title = { Text(title) },
         actions = {
+            IconButton(onClick = onMoments) {
+                Icon(
+                    painterResource(R.drawable.ic_moment),
+                    contentDescription = stringResource(R.string.action_moments),
+                    tint = MaterialTheme.colorScheme.moment,
+                )
+            }
             IconButton(onClick = onSearch) {
                 Icon(painterResource(R.drawable.ic_search), contentDescription = stringResource(R.string.action_search))
             }

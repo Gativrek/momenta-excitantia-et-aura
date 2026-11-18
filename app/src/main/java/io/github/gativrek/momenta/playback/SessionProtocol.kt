@@ -27,6 +27,7 @@ object SessionProtocol {
     /**
      * Saves a Moment at the current position of the current track. Also the button in the media
      * notification. Our UI gets the new Moment's ID back in the result extras ([RESULT_MOMENT_ID]).
+     * Optional args [ARG_START] and [ARG_END] save exactly that section instead.
      */
     val SAVE_MOMENT = SessionCommand(PREFIX + "SAVE_MOMENT", Bundle.EMPTY)
 
@@ -38,6 +39,8 @@ object SessionProtocol {
     const val ARG_DURATION_MS = "duration_ms"
     const val ARG_FINISH_TRACK = "finish_track"
     const val RESULT_MOMENT_ID = "moment_id"
+    const val ARG_START = "start"
+    const val ARG_END = "end"
 
     // Session extras: the sleep timer's state, pushed to every controller.
     private const val EXTRA_SLEEP_END = PREFIX + "SLEEP_END_ELAPSED"

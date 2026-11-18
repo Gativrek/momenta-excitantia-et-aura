@@ -21,8 +21,11 @@ import androidx.compose.ui.res.stringResource
 import io.github.gativrek.momenta.R
 import io.github.gativrek.momenta.data.library.Track
 import io.github.gativrek.momenta.ui.screens.moments.LocalMomentActions
+import io.github.gativrek.momenta.ui.screens.moments.formatMomentTime
+import io.github.gativrek.momenta.ui.screens.notes.SongNoteDialog
 import io.github.gativrek.momenta.ui.screens.playlists.AddToPlaylistDialog
 import io.github.gativrek.momenta.ui.screens.tags.EditTrackTagsDialog
+import io.github.gativrek.momenta.ui.theme.moment
 
 /** The per-track queue actions every track list offers. */
 class QueueActions(
@@ -39,6 +42,8 @@ fun TrackMenuButton(
     var open by remember { mutableStateOf(false) }
     var addingToPlaylist by remember { mutableStateOf(false) }
     var editingTags by remember { mutableStateOf(false) }
+    var choosingMoment by remember { mutableStateOf(false) }
+    var writingNote by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val moments = LocalMomentActions.current
     Box {
@@ -53,7 +58,8 @@ fun TrackMenuButton(
             if (moments.momentsOf(track).isNotEmpty()) {
                 MenuItem(R.string.action_jump_to_moment, R.drawable.ic_moment) {
                     open = false
-                    moments.jumpToMoment(track)
+                    // Several Moments: say which one.
+                    if (moments.momentsOf(track).size > 1) choosingMoment = true else moments.jumpToMoment(track)
                 }
             }
             MenuItem(R.string.action_play_next, R.drawable.ic_play_next) {
@@ -70,9 +76,37 @@ fun TrackMenuButton(
                 open = false
                 addingToPlaylist = true
             }
+            MenuItem(R.string.action_liner_note, R.drawable.ic_note) {
+                open = false
+                writingNote = true
+            }
             MenuItem(R.string.action_edit_tags, R.drawable.ic_edit) {
                 open = false
                 editingTags = true
+            }
+        }
+        DropdownMenu(expanded = choosingMoment, onDismissRequest = { choosingMoment = false }) {
+            moments.momentsOf(track).forEachIndexed { i, moment ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text =
+                                moment.name?.takeIf { it.isNotBlank() }
+                                    ?: stringResource(R.string.moment_number, i + 1),
+                        )
+                    },
+                    trailingIcon = {
+                        Text(
+                            text = formatMomentTime(moment.startMs).substringBefore('.'),
+                            color = MaterialTheme.colorScheme.moment,
+                        )
+                    },
+                    leadingIcon = { Icon(painterResource(R.drawable.ic_moment), contentDescription = null) },
+                    onClick = {
+                        choosingMoment = false
+                        moments.jumpToMoment(track, moment)
+                    },
+                )
             }
         }
     }
@@ -81,6 +115,9 @@ fun TrackMenuButton(
     }
     if (editingTags) {
         EditTrackTagsDialog(track = track, onDismiss = { editingTags = false })
+    }
+    if (writingNote) {
+        SongNoteDialog(track = track, onDismiss = { writingNote = false })
     }
 }
 

@@ -44,12 +44,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.Player
 import io.github.gativrek.momenta.R
 import io.github.gativrek.momenta.data.moments.MomentEntity
+import io.github.gativrek.momenta.data.moments.MomentSuggestion
 import io.github.gativrek.momenta.data.settings.MomentsSettings
 import io.github.gativrek.momenta.playback.PlayerUiState
 import io.github.gativrek.momenta.ui.components.ArtworkImage
@@ -60,7 +62,10 @@ import io.github.gativrek.momenta.ui.screens.moments.FieryTitle
 import io.github.gativrek.momenta.ui.screens.moments.HeavenlyLight
 import io.github.gativrek.momenta.ui.screens.moments.LocalMomentGlow
 import io.github.gativrek.momenta.ui.screens.moments.MomentGearSheet
+import io.github.gativrek.momenta.ui.screens.moments.formatMomentTime
 import io.github.gativrek.momenta.ui.screens.moments.momentAura
+import io.github.gativrek.momenta.ui.theme.MOMENT_MARK_ALPHA
+import io.github.gativrek.momenta.ui.theme.moment
 import kotlinx.coroutines.delay
 
 /** What the lightning-gear opens on: a Moment's ID, or the song's first Moment. */
@@ -77,6 +82,8 @@ fun NowPlayingScreen(
     val position by viewModel.finePosition.collectAsStateWithLifecycle(initialValue = 0L)
     val moments by viewModel.currentMoments.collectAsStateWithLifecycle()
     val settings by viewModel.settings.collectAsStateWithLifecycle()
+    val suggestion by viewModel.suggestion.collectAsStateWithLifecycle()
+    val linerNote by viewModel.linerNote.collectAsStateWithLifecycle()
 
     // Nothing left to show (queue cleared, or service gone): close instead of an empty screen.
     LaunchedEffect(state.connected, state.nowPlaying) {
@@ -101,6 +108,8 @@ fun NowPlayingScreen(
         moments = moments,
         settings = settings,
         justSavedMoment = justSaved != null,
+        suggestion = suggestion,
+        linerNote = linerNote,
         onCollapse = onCollapse,
         onTogglePlayPause = viewModel::togglePlayPause,
         onPrevious = viewModel::previous,
@@ -111,6 +120,8 @@ fun NowPlayingScreen(
         onOpenSleepTimer = { showSleepTimer = true },
         onOpenQueue = onOpenQueue,
         onSaveMoment = { viewModel.saveMoment { id -> justSaved = id } },
+        onSaveSuggestion = { viewModel.saveSuggestion { id -> justSaved = id } },
+        onDismissSuggestion = viewModel::dismissSuggestion,
         onOpenGear = {
             gearFor = justSaved ?: GEAR_FIRST
             justSaved = null
@@ -153,6 +164,8 @@ fun NowPlayingContent(
     moments: List<MomentEntity>,
     settings: MomentsSettings,
     justSavedMoment: Boolean,
+    suggestion: MomentSuggestion?,
+    linerNote: String?,
     onCollapse: () -> Unit,
     onTogglePlayPause: () -> Unit,
     onPrevious: () -> Unit,
@@ -163,6 +176,8 @@ fun NowPlayingContent(
     onOpenSleepTimer: () -> Unit,
     onOpenQueue: () -> Unit,
     onSaveMoment: () -> Unit,
+    onSaveSuggestion: () -> Unit,
+    onDismissSuggestion: () -> Unit,
     onOpenGear: () -> Unit,
     onToggleChill: () -> Unit,
     modifier: Modifier = Modifier,
@@ -245,12 +260,29 @@ fun NowPlayingContent(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
                     )
+                    // The liner note, quietly: a line of the user's own under the song.
+                    AnimatedVisibility(visible = linerNote != null, enter = fadeIn(), exit = fadeOut()) {
+                        Text(
+                            text = linerNote.orEmpty(),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontStyle = FontStyle.Italic,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = LINER_NOTE_ALPHA),
+                            maxLines = 3,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                        )
+                    }
                 }
                 IconButton(onClick = onSaveMoment, modifier = Modifier.size(56.dp)) {
                     Icon(
                         painter = painterResource(R.drawable.ic_moment),
                         contentDescription = stringResource(R.string.moment_save),
-                        tint = if (moments.isNotEmpty()) spark else MaterialTheme.colorScheme.onSurfaceVariant,
+                        tint =
+                            if (moments.isNotEmpty()) {
+                                MaterialTheme.colorScheme.moment
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
                         modifier = Modifier.size(32.dp),
                     )
                 }
@@ -325,6 +357,9 @@ fun NowPlayingContent(
             AnimatedVisibility(visible = justSavedMoment, enter = fadeIn(), exit = fadeOut()) {
                 SavedNote(onOpenGear)
             }
+            AnimatedVisibility(visible = suggestion != null && !justSavedMoment, enter = fadeIn(), exit = fadeOut()) {
+                suggestion?.let { SuggestionNote(it, onSaveSuggestion, onDismissSuggestion) }
+            }
             Row(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -345,12 +380,12 @@ fun NowPlayingContent(
                         Icon(
                             painterResource(R.drawable.ic_moment_gear),
                             contentDescription = stringResource(R.string.moment_gear_title),
-                            tint = spark,
+                            tint = MaterialTheme.colorScheme.moment,
                             modifier = Modifier.size(ButtonDefaults.IconSize),
                         )
                         Text(
                             text = moments.size.toString(),
-                            color = spark,
+                            color = MaterialTheme.colorScheme.moment,
                             modifier = Modifier.padding(start = ButtonDefaults.IconSpacing),
                         )
                     }
@@ -376,12 +411,17 @@ fun NowPlayingContent(
 private fun SavedNote(onOpenGear: () -> Unit) {
     Surface(
         shape = CircleShape,
-        color = MaterialTheme.colorScheme.tertiaryContainer,
-        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        contentColor = MaterialTheme.colorScheme.onSurface,
         modifier = Modifier.padding(bottom = 8.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 16.dp)) {
-            Icon(painterResource(R.drawable.ic_moment), contentDescription = null, modifier = Modifier.size(18.dp))
+            Icon(
+                painterResource(R.drawable.ic_moment),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.moment,
+                modifier = Modifier.size(18.dp),
+            )
             Text(stringResource(R.string.moment_saved), modifier = Modifier.padding(start = 8.dp))
             TextButton(onClick = onOpenGear) {
                 Icon(
@@ -393,6 +433,44 @@ private fun SavedNote(onOpenGear: () -> Unit) {
                     stringResource(R.string.moment_adjust),
                     modifier = Modifier.padding(start = ButtonDefaults.IconSpacing),
                 )
+            }
+        }
+    }
+}
+
+/** A section that keeps getting replayed: one tap makes it a Moment. */
+@Composable
+private fun SuggestionNote(
+    suggestion: MomentSuggestion,
+    onSave: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    Surface(
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+    ) {
+        Column(modifier = Modifier.padding(start = 16.dp, top = 12.dp, end = 8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    painterResource(R.drawable.ic_moment),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.moment,
+                    modifier = Modifier.size(18.dp),
+                )
+                Text(
+                    text =
+                        stringResource(
+                            R.string.moment_suggest,
+                            formatMomentTime(suggestion.startMs).substringBefore('.'),
+                        ),
+                    modifier = Modifier.padding(start = 8.dp),
+                )
+            }
+            Row(modifier = Modifier.align(Alignment.End)) {
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.moment_suggest_dismiss)) }
+                TextButton(onClick = onSave) { Text(stringResource(R.string.moment_suggest_save)) }
             }
         }
     }
@@ -416,7 +494,7 @@ private fun ModeButton(
 }
 
 /**
- * Slider over the track, with the song's Moments marked under it in the spark colour. While
+ * Slider over the track, with the song's Moments marked under it in the accent. While
  * the user drags, it shows the drag position and the player keeps playing; the seek is sent
  * once, on release, instead of on every pixel.
  */
@@ -431,7 +509,7 @@ private fun SeekBar(
     var dragFraction by remember { mutableStateOf<Float?>(null) }
     val duration = durationMs.coerceAtLeast(1)
     val fraction = dragFraction ?: (positionMs.toFloat() / duration).coerceIn(0f, 1f)
-    val spark = MaterialTheme.colorScheme.tertiary
+    val mark = MaterialTheme.colorScheme.moment.copy(alpha = MOMENT_MARK_ALPHA)
 
     Column(modifier = modifier.fillMaxWidth()) {
         Slider(
@@ -452,7 +530,7 @@ private fun SeekBar(
                     val start = inset + track * (m.startMs.toFloat() / duration).coerceIn(0f, 1f)
                     val end = inset + track * (m.endMs.toFloat() / duration).coerceIn(0f, 1f)
                     drawRoundRect(
-                        color = spark,
+                        color = mark,
                         topLeft = Offset(start, 0f),
                         size = Size((end - start).coerceAtLeast(size.height), size.height),
                         cornerRadius = CornerRadius(size.height / 2),
@@ -481,3 +559,6 @@ private const val SAVED_NOTE_MS = 6_000L
 /** How much the cover rises during a Moment, and how far the light spills past it. */
 private const val COVER_RISE = 0.07f
 private const val LIGHT_SCALE = 1.45f
+
+/** Liner notes sit back from the song's own text. */
+private const val LINER_NOTE_ALPHA = 0.85f

@@ -2,6 +2,7 @@ package io.github.gativrek.momenta.data.moments
 
 import io.github.gativrek.momenta.data.library.Track
 import io.github.gativrek.momenta.data.listening.SongEntity
+import io.github.gativrek.momenta.playback.MomentGainProcessor
 import io.github.gativrek.momenta.playback.MomentTracker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -27,10 +28,12 @@ class MomentsTest {
     }
 
     @Test
-    fun `boost gain is about 2_3 dB at the maximum`() {
-        assertEquals(0, Moments.boostGainMb(0))
-        assertEquals(227, Moments.boostGainMb(30))
-        assertTrue(Moments.boostGainMb(10) in 80..85)
+    fun `boost is about 5_8 dB at the maximum`() {
+        assertEquals(1f, Moments.boostGain(0), 0f)
+        assertEquals(1.546f, Moments.boostGain(30), 0.005f)
+        assertEquals(1.961f, Moments.boostGain(50), 0.005f)
+        assertEquals(Moments.boostGain(50), Moments.boostGain(100), 0f) // capped
+        assertTrue(Moments.boostGain(50) <= MomentGainProcessor.MAX_GAIN)
     }
 
     @Test

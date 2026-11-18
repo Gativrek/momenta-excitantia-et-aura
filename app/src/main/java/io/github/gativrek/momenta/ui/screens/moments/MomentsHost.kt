@@ -33,8 +33,11 @@ import kotlinx.coroutines.flow.map
 interface MomentActions {
     fun momentsOf(track: Track): List<MomentEntity>
 
-    /** Plays [track] from its first Moment's run-up. */
-    fun jumpToMoment(track: Track)
+    /** Plays [track] from [moment]'s run-up (its first Moment if null). */
+    fun jumpToMoment(
+        track: Track,
+        moment: MomentEntity? = null,
+    )
 }
 
 val LocalMomentActions =
@@ -42,7 +45,10 @@ val LocalMomentActions =
         object : MomentActions {
             override fun momentsOf(track: Track) = emptyList<MomentEntity>()
 
-            override fun jumpToMoment(track: Track) = Unit
+            override fun jumpToMoment(
+                track: Track,
+                moment: MomentEntity?,
+            ) = Unit
         }
     }
 
@@ -123,8 +129,11 @@ fun MomentsHost(content: @Composable () -> Unit) {
             object : MomentActions {
                 override fun momentsOf(track: Track) = byTrack[track.id].orEmpty()
 
-                override fun jumpToMoment(track: Track) {
-                    byTrack[track.id]?.firstOrNull()?.let { viewModel.jump(track, it) }
+                override fun jumpToMoment(
+                    track: Track,
+                    moment: MomentEntity?,
+                ) {
+                    (moment ?: byTrack[track.id]?.firstOrNull())?.let { viewModel.jump(track, it) }
                 }
             }
         }

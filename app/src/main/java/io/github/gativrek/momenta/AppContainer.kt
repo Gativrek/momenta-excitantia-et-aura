@@ -6,16 +6,25 @@ import androidx.datastore.preferences.preferencesDataStoreFile
 import io.github.gativrek.momenta.data.library.LibraryRepository
 import io.github.gativrek.momenta.data.library.MediaStoreSource
 import io.github.gativrek.momenta.data.moments.MomentsRepository
+import io.github.gativrek.momenta.data.notes.LinerNotesRepository
 import io.github.gativrek.momenta.data.playlists.MomentaDatabase
 import io.github.gativrek.momenta.data.playlists.PlaylistRepository
 import io.github.gativrek.momenta.data.settings.AppearanceStore
 import io.github.gativrek.momenta.data.settings.MomentsSettingsStore
+import io.github.gativrek.momenta.data.settings.ThemePinsStore
 import io.github.gativrek.momenta.data.tags.TagWriter
 import io.github.gativrek.momenta.playback.PlaybackStateStore
 import io.github.gativrek.momenta.playback.PlayerConnection
+import io.github.gativrek.momenta.ui.theme.ThemeSpec
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.plus
 
 /**
@@ -66,6 +75,11 @@ class AppContainer(
         MomentsRepository(database.momentsDao(), database.listeningDao(), libraryRepository, applicationScope)
     }
 
+    /** Private notes on songs and albums. */
+    val linerNotes: LinerNotesRepository by lazy {
+        LinerNotesRepository(database.linerNotesDao(), database.listeningDao())
+    }
+
     val momentsSettings: MomentsSettingsStore by lazy {
         MomentsSettingsStore(
             PreferenceDataStoreFactory.create(scope = applicationScope + Dispatchers.IO) {
@@ -91,10 +105,33 @@ class AppContainer(
     /** Connected/disconnected by MainActivity's onStart/onStop. */
     val playerConnection: PlayerConnection by lazy { PlayerConnection(appContext) }
 
+    /** Themes pinned to albums. Backed up with the other settings. */
+    val themePins: ThemePinsStore by lazy {
+        ThemePinsStore(
+            PreferenceDataStoreFactory.create(scope = applicationScope + Dispatchers.IO) {
+                appContext.preferencesDataStoreFile(THEME_PINS_FILE)
+            },
+            scope = applicationScope,
+        )
+    }
+
+    /** The theme pinned to the playing song's album, if any: the app wears it while that song is on. */
+    val pinnedTheme: StateFlow<ThemeSpec?> by lazy {
+        combine(
+            playerConnection.state.map { it.nowPlaying?.trackId }.distinctUntilChanged(),
+            libraryRepository.tracks,
+            themePins.pins,
+        ) { trackId, tracks, pins ->
+            if (trackId == null || pins.isEmpty()) return@combine null
+            tracks.firstOrNull { it.id == trackId }?.let { pins[ThemePinsStore.keyOf(it)] }
+        }.stateIn(applicationScope, SharingStarted.Eagerly, null)
+    }
+
     private companion object {
         /** Also named in the backup rules (res/xml), which exclude it. */
         const val PLAYBACK_STATE_FILE = "playback_state"
         const val MOMENTS_SETTINGS_FILE = "moments_settings"
+        const val THEME_PINS_FILE = "theme_pins"
 
         /** Backed up like any setting: a theme is worth keeping on a new phone. */
         const val APPEARANCE_FILE = "appearance"

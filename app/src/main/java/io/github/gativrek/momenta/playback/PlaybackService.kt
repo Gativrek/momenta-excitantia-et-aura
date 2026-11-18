@@ -2,6 +2,7 @@ package io.github.gativrek.momenta.playback
 
 import android.app.PendingIntent
 import android.content.ContentUris
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.SystemClock
@@ -16,7 +17,10 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.audio.AudioSink
+import androidx.media3.exoplayer.audio.DefaultAudioSink
 import androidx.media3.exoplayer.source.ShuffleOrder.DefaultShuffleOrder
 import androidx.media3.session.CommandButton
 import androidx.media3.session.DefaultMediaNotificationProvider
@@ -33,6 +37,7 @@ import io.github.gativrek.momenta.MainActivity
 import io.github.gativrek.momenta.R
 import io.github.gativrek.momenta.data.library.Track
 import io.github.gativrek.momenta.data.listening.PlayEntity
+import io.github.gativrek.momenta.data.moments.MomentSuggestion
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -72,6 +77,27 @@ class PlaybackService : MediaSessionService() {
 
     /** The library as last seen, to name what was listened to. */
     private var library: Map<Long, Track> = emptyMap()
+    private val replays = ReplayDetector()
+
+    /** The Moment volume boost, in the audio pipeline (see MomentGainProcessor). */
+    private val momentGain = MomentGainProcessor()
+
+    /** ExoPlayer's renderers with [momentGain] in its audio sink, after decoding. */
+    private fun renderersWithMomentGain() =
+        object : DefaultRenderersFactory(this) {
+            override fun buildAudioSink(
+                context: Context,
+                enableFloatOutput: Boolean,
+                enableAudioTrackPlaybackParams: Boolean,
+            ): AudioSink =
+                DefaultAudioSink
+                    .Builder(context)
+                    .setEnableFloatOutput(enableFloatOutput)
+                    .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
+                    .setAudioProcessors(arrayOf(momentGain))
+                    .build()
+        }
+
     private val playTracker =
         PlayTracker(SystemClock::elapsedRealtime, System::currentTimeMillis) { listen -> record(listen) }
 
@@ -81,7 +107,7 @@ class PlaybackService : MediaSessionService() {
 
         val exoPlayer =
             ExoPlayer
-                .Builder(this)
+                .Builder(this, renderersWithMomentGain())
                 .setAudioAttributes(
                     AudioAttributes
                         .Builder()
@@ -133,6 +159,7 @@ class PlaybackService : MediaSessionService() {
         momentEngine =
             MomentEngine(
                 exo = exoPlayer,
+                gain = momentGain,
                 scope = scope,
                 momentsOf = { id ->
                     container.momentsRepository.byTrack.value[id]
@@ -209,7 +236,7 @@ class PlaybackService : MediaSessionService() {
                 .mapNotNull { i ->
                     val old = exo.getMediaItemAt(i)
                     val track = MediaItemMapper.trackId(old)?.let(library::get) ?: return@mapNotNull null
-                    val fresh = MediaItemMapper.toMediaItem(track)
+                    val fresh = MediaItemMapper.toMediaItem(track, MediaItemMapper.isReel(old))
                     if (MediaItemMapper.isOutdated(old, fresh)) i to fresh else null
                 }.toMap()
         if (updates.isEmpty()) return
@@ -237,8 +264,11 @@ class PlaybackService : MediaSessionService() {
         }
     }
 
-    /** A Moment around the current position of the current track; completes with its ID, or null. */
-    private fun saveMoment(): ListenableFuture<Long?> {
+    /**
+     * A Moment around the current position of the current track, or exactly [section] of it;
+     * completes with its ID, or null.
+     */
+    private fun saveMoment(section: LongRange? = null): ListenableFuture<Long?> {
         val result = SettableFuture.create<Long?>()
         val track = player.currentMediaItem?.let(MediaItemMapper::trackId)?.let(library::get)
         if (track == null) {
@@ -248,7 +278,14 @@ class PlaybackService : MediaSessionService() {
         val position = player.currentPosition
         container.applicationScope.launch {
             try {
-                result.set(container.momentsRepository.saveAt(track, position).id)
+                val repository = container.momentsRepository
+                val moment =
+                    if (section != null) {
+                        repository.save(track, section.first, section.last)
+                    } else {
+                        repository.saveAt(track, position)
+                    }
+                result.set(moment.id)
             } catch (e: Exception) {
                 Log.w(TAG, "Couldn't save a Moment", e)
                 result.set(null)
@@ -376,15 +413,32 @@ class PlaybackService : MediaSessionService() {
                 reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO ||
                     reason == Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT
             playTracker.onTrackChanged(mediaItem?.let(MediaItemMapper::trackId), completed, player.isPlaying)
+            momentEngine.onTrackChanged()
             momentEngine.refresh()
+        }
+
+        /** Seeking back to the same spot again: offer that section as a Moment. */
+        override fun onPositionDiscontinuity(
+            oldPosition: Player.PositionInfo,
+            newPosition: Player.PositionInfo,
+            reason: Int,
+        ) {
+            if (reason != Player.DISCONTINUITY_REASON_SEEK) return
+            if (oldPosition.mediaItemIndex != newPosition.mediaItemIndex) return
+            if (MediaItemMapper.isReel(player.currentMediaItem)) return // Moments mode seeks by itself
+            val trackId = player.currentMediaItem?.let(MediaItemMapper::trackId) ?: return
+            val moments =
+                container.momentsRepository.byTrack.value[trackId]
+                    .orEmpty()
+            val section =
+                replays.onSeek(trackId, oldPosition.positionMs, newPosition.positionMs, moments) ?: return
+            container.momentsRepository.suggest(MomentSuggestion(trackId, section.first, section.last))
         }
 
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             playTracker.onPlayingChanged(isPlaying, player.currentMediaItem?.let(MediaItemMapper::trackId))
             momentEngine.refresh()
         }
-
-        override fun onAudioSessionIdChanged(audioSessionId: Int) = momentEngine.onAudioSessionIdChanged()
 
         override fun onPlaybackStateChanged(playbackState: Int) {
             if (playbackState == Player.STATE_ENDED) playTracker.onEnded()
@@ -474,7 +528,11 @@ class PlaybackService : MediaSessionService() {
                     // From our UI the screen shows what happened; from the notification, a toast says so.
                     val fromNotification = session.isMediaNotificationController(controller)
                     return Futures.transform(
-                        saveMoment(),
+                        saveMoment(
+                            args
+                                .takeIf { it.containsKey(SessionProtocol.ARG_START) }
+                                ?.let { it.getLong(SessionProtocol.ARG_START)..it.getLong(SessionProtocol.ARG_END) },
+                        ),
                         { id -> momentResult(id, fromNotification) },
                         ContextCompat.getMainExecutor(this@PlaybackService),
                     )

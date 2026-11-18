@@ -15,21 +15,37 @@ object MediaItemMapper {
     private const val EXTRA_ALBUM_ID = "io.github.gativrek.momenta.ALBUM_ID"
     private const val EXTRA_SIZE = "io.github.gativrek.momenta.SIZE"
 
+    /** Set on items queued by Moments mode: the service plays only their Moments. */
+    private const val EXTRA_REEL = "io.github.gativrek.momenta.REEL"
+
     /** mediaId = MediaStore `_ID`, the one ID every layer shares. The URI is set too, for in-process use. */
-    fun toMediaItem(track: Track): MediaItem =
+    fun toMediaItem(
+        track: Track,
+        reel: Boolean = false,
+    ): MediaItem =
         MediaItem
             .Builder()
             .setMediaId(track.id.toString())
             .setUri(track.contentUri())
-            .setMediaMetadata(toMetadata(track))
+            .setMediaMetadata(toMetadata(track, reel))
             .build()
+
+    /** Whether [item] was queued by Moments mode. */
+    fun isReel(item: MediaItem?): Boolean =
+        item
+            ?.mediaMetadata
+            ?.extras
+            ?.getBoolean(EXTRA_REEL) == true
 
     /**
      * Title, artist and album are what AVRCP and car displays read.
      * No artwork URI: ExoPlayer extracts the cover embedded in the file while playing and
      * hands it to the notification, which is exactly the per-track art we want.
      */
-    fun toMetadata(track: Track): MediaMetadata =
+    fun toMetadata(
+        track: Track,
+        reel: Boolean = false,
+    ): MediaMetadata =
         MediaMetadata
             .Builder()
             .setTitle(track.title)
@@ -46,6 +62,7 @@ object MediaItemMapper {
                 Bundle().apply {
                     putLong(EXTRA_ALBUM_ID, track.albumId)
                     putLong(EXTRA_SIZE, track.sizeBytes)
+                    if (reel) putBoolean(EXTRA_REEL, true)
                 },
             ).build()
 

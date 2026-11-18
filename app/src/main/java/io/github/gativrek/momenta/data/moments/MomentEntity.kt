@@ -54,7 +54,13 @@ data class MomentRow(
 )
 
 object Moments {
-    const val MAX_BOOST_PERCENT = 30
+    /** The longest section offered as a Moment after it keeps getting replayed. */
+    const val SUGGEST_MAX_MS = 30_000L
+
+    /** Moments mode: how long a song plays on past its Moment before the next one comes in. */
+    const val REEL_TAIL_MS = 3_000L
+
+    const val MAX_BOOST_PERCENT = 50
     const val DEFAULT_LEAD_IN_MS = 8_000L
     const val MAX_LEAD_IN_MS = 20_000L
     const val MIN_DURATION_MS = 1_000L
@@ -77,7 +83,22 @@ object Moments {
         return start..stop
     }
 
-    /** [percent] of extra loudness as LoudnessEnhancer gain, in millibels. +30% is about +2.3 dB. */
-    fun boostGainMb(percent: Int): Int =
-        if (percent <= 0) 0 else (2000 * kotlin.math.log10(1 + percent / 100.0)).toInt()
+    /**
+     * [percent] more loudness, as a gain to multiply the audio by. Loudness, not amplitude: we
+     * hear about twice as loud per +10 dB, so +50% is 10·log2(1.5) ≈ +5.8 dB, a gain of ≈ 1.96.
+     * Capped at [MAX_BOOST_PERCENT] (older Moments may have been saved with more).
+     */
+    fun boostGain(percent: Int): Float {
+        if (percent <= 0) return 1f
+        val p = percent.coerceAtMost(MAX_BOOST_PERCENT)
+        val db = 10 * kotlin.math.ln(1 + p / 100.0) / kotlin.math.ln(2.0)
+        return Math.pow(10.0, db / 20).toFloat()
+    }
 }
+
+/** A section of a song that keeps getting replayed, offered as a Moment. */
+data class MomentSuggestion(
+    val trackId: Long,
+    val startMs: Long,
+    val endMs: Long,
+)

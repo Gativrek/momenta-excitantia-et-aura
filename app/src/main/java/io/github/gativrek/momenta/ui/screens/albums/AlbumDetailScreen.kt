@@ -42,6 +42,7 @@ import io.github.gativrek.momenta.ui.components.TrackMenuButton
 import io.github.gativrek.momenta.ui.format.formatDuration
 import io.github.gativrek.momenta.ui.screens.AlbumDetailViewModel
 import io.github.gativrek.momenta.ui.screens.LibraryViewModels
+import io.github.gativrek.momenta.ui.screens.notes.AlbumNoteSection
 import io.github.gativrek.momenta.ui.screens.playlists.AddToPlaylistDialog
 import io.github.gativrek.momenta.ui.screens.tags.EditAlbumTagsDialog
 
@@ -91,6 +92,7 @@ fun AlbumDetailContent(
 ) {
     var addingToPlaylist by rememberSaveable { mutableStateOf(false) }
     var editingTags by rememberSaveable { mutableStateOf(false) }
+    var pinningTheme by rememberSaveable { mutableStateOf(false) }
     Column(modifier.fillMaxSize()) {
         DetailTopBar(
             title = album.title ?: stringResource(R.string.unknown_album),
@@ -100,6 +102,12 @@ fun AlbumDetailContent(
                     Icon(
                         painterResource(R.drawable.ic_playlist_add),
                         contentDescription = stringResource(R.string.action_add_to_playlist),
+                    )
+                }
+                IconButton(onClick = { pinningTheme = true }) {
+                    Icon(
+                        painterResource(R.drawable.ic_palette),
+                        contentDescription = stringResource(R.string.pin_theme_title),
                     )
                 }
                 IconButton(onClick = { editingTags = true }) {
@@ -112,6 +120,7 @@ fun AlbumDetailContent(
         )
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             item(key = "header", contentType = "header") { AlbumHeader(album) }
+            item(key = "note", contentType = "note") { AlbumNoteSection(album) }
             item(key = "actions", contentType = "actions") {
                 PlayShuffleButtons(onPlayAll = { onPlay(0) }, onShuffle = onShuffle)
             }
@@ -141,6 +150,9 @@ fun AlbumDetailContent(
     }
     if (editingTags) {
         EditAlbumTagsDialog(album = album, onDismiss = { editingTags = false })
+    }
+    if (pinningTheme) {
+        ThemePinDialog(album = album, onDismiss = { pinningTheme = false })
     }
 }
 

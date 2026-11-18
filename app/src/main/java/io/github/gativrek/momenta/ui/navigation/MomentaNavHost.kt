@@ -17,6 +17,7 @@ import io.github.gativrek.momenta.ui.screens.appearance.AppearanceScreen
 import io.github.gativrek.momenta.ui.screens.artists.ArtistDetailScreen
 import io.github.gativrek.momenta.ui.screens.artists.ArtistsScreen
 import io.github.gativrek.momenta.ui.screens.folders.FoldersScreen
+import io.github.gativrek.momenta.ui.screens.moments.MomentsScreen
 import io.github.gativrek.momenta.ui.screens.nowplaying.NowPlayingScreen
 import io.github.gativrek.momenta.ui.screens.nowplaying.PlayerViewModel
 import io.github.gativrek.momenta.ui.screens.playlists.PlaylistDetailScreen
@@ -33,6 +34,9 @@ const val QUEUE_ROUTE = "queue"
 
 /** Theme settings, opened from the top bar of any tab. Full-screen, so the whole screen previews the theme. */
 const val APPEARANCE_ROUTE = "appearance"
+
+/** Your Moments and the reel, opened from the top bar of any tab. Keeps the mini-player, not the tabs. */
+const val MOMENTS_ROUTE = "moments"
 
 /** Search, opened from the top bar of any tab. Not inside a tab: results open in their own tab. */
 const val SEARCH_ROUTE = "search"
@@ -143,6 +147,10 @@ fun MomentaNavHost(
                 onArtistClick = { navController.navigate("$artistsTab/artist/${it.id}") },
                 onPlayStarted = onPlayStarted,
             )
+        }
+
+        composable(MOMENTS_ROUTE) {
+            MomentsScreen(onBack = { navController.popBackStack() }, onPlayStarted = onPlayStarted)
         }
 
         composable(APPEARANCE_ROUTE) {

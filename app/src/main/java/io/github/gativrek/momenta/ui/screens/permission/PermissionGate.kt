@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -35,6 +36,7 @@ import androidx.core.app.ActivityCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import io.github.gativrek.momenta.R
+import io.github.gativrek.momenta.ui.theme.MomentaLogo
 import io.github.gativrek.momenta.ui.theme.MomentaTheme
 
 /**
@@ -97,10 +99,20 @@ fun PermissionScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            // First run: the one screen where the app introduces itself by its full name.
+            MomentaLogo(size = 88.dp)
+            Text(
+                text = stringResource(R.string.app_full_name),
+                style = MaterialTheme.typography.titleMedium,
+                fontStyle = FontStyle.Italic,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 12.dp, bottom = 16.dp),
+            )
             Icon(
                 painter = painterResource(R.drawable.ic_library_access),
                 contentDescription = null,
-                modifier = Modifier.size(72.dp),
+                modifier = Modifier.size(40.dp),
                 tint = MaterialTheme.colorScheme.primary,
             )
             Text(

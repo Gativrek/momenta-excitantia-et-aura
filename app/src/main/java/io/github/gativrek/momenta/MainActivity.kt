@@ -19,6 +19,7 @@ import io.github.gativrek.momenta.ui.screens.permission.PermissionGate
 import io.github.gativrek.momenta.ui.screens.tags.TagEditorHost
 import io.github.gativrek.momenta.ui.theme.MomentaTheme
 import io.github.gativrek.momenta.ui.theme.ThemeBackdrop
+import io.github.gativrek.momenta.ui.theme.animatedTheme
 import io.github.gativrek.momenta.ui.theme.isDarkBackground
 
 class MainActivity : ComponentActivity() {
@@ -34,7 +35,9 @@ class MainActivity : ComponentActivity() {
             // Null for the few milliseconds before the saved theme is read: the window
             // background (the default theme's color) shows until then, never a wrong theme.
             val theme by container.appearanceStore.theme.collectAsStateWithLifecycle()
-            val spec = theme ?: return@setContent
+            // A theme pinned to the playing song's album wins while that song is on.
+            val pinned by container.pinnedTheme.collectAsStateWithLifecycle()
+            val spec = animatedTheme(pinned ?: theme ?: return@setContent, pinned)
             val dark = isDarkBackground(spec.background)
             LaunchedEffect(dark) {
                 // Status and navigation bar icons follow the theme, not the system dark mode.

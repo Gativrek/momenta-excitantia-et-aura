@@ -5,8 +5,10 @@ import io.github.gativrek.momenta.data.library.Track
 import io.github.gativrek.momenta.data.listening.ListeningDao
 import io.github.gativrek.momenta.data.playlists.TrackMatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 
@@ -25,19 +27,42 @@ class MomentsRepository(
         combine(library.tracks, dao.observeAll()) { tracks, rows -> group(tracks, rows) }
             .stateIn(scope, SharingStarted.Eagerly, emptyMap())
 
+    private val _suggestion = MutableStateFlow<MomentSuggestion?>(null)
+
+    /** A section that keeps getting replayed, offered on Now Playing until saved or dismissed. */
+    val suggestion: StateFlow<MomentSuggestion?> = _suggestion.asStateFlow()
+
+    fun suggest(suggestion: MomentSuggestion) {
+        _suggestion.value = suggestion
+    }
+
+    fun dismissSuggestion() {
+        _suggestion.value = null
+    }
+
     /** A new Moment around [positionMs] (see Moments.windowAt). Returns it, with its ID. */
     suspend fun saveAt(
         track: Track,
         positionMs: Long,
     ): MomentEntity {
         val window = Moments.windowAt(positionMs, track.durationMs)
+        return save(track, window.first, window.last)
+    }
+
+    /** A new Moment from [startMs] to [endMs] exactly. Returns it, with its ID. */
+    suspend fun save(
+        track: Track,
+        startMs: Long,
+        endMs: Long,
+    ): MomentEntity {
         val moment =
             MomentEntity(
                 songId = listeningDao.songFor(track),
-                startMs = window.first,
-                endMs = window.last,
+                startMs = startMs,
+                endMs = endMs,
                 createdAt = System.currentTimeMillis(),
             )
+        _suggestion.value = null
         return moment.copy(id = dao.insert(moment))
     }
 

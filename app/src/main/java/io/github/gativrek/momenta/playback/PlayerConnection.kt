@@ -172,9 +172,11 @@ class PlayerConnection(
         tracks: List<Track>,
         startIndex: Int = 0,
         startPositionMs: Long = 0L,
+        /** Moments mode: the service plays only each song's Moments, with their run-ups. */
+        reel: Boolean = false,
     ) {
         if (tracks.isEmpty()) return
-        val items = tracks.map(MediaItemMapper::toMediaItem)
+        val items = tracks.map { MediaItemMapper.toMediaItem(it, reel) }
         withController {
             it.setMediaItems(items, startIndex.coerceIn(tracks.indices), startPositionMs)
             it.prepare()
@@ -282,11 +284,18 @@ class PlayerConnection(
      * Saves a Moment at the current position (the service knows it exactly). Returns the new
      * Moment's ID, or null if there was nothing playing or it couldn't be saved.
      */
-    suspend fun saveMoment(): Long? {
+    suspend fun saveMoment(section: LongRange? = null): Long? {
         val current = controller ?: return null
+        val args =
+            section?.let {
+                Bundle().apply {
+                    putLong(SessionProtocol.ARG_START, it.first)
+                    putLong(SessionProtocol.ARG_END, it.last)
+                }
+            } ?: Bundle.EMPTY
         val result =
             suspendCancellableCoroutine<SessionResult?> { cont ->
-                val future = current.sendCustomCommand(SessionProtocol.SAVE_MOMENT, Bundle.EMPTY)
+                val future = current.sendCustomCommand(SessionProtocol.SAVE_MOMENT, args)
                 future.addListener(
                     { cont.resume(runCatching { future.get() }.getOrNull()) },
                     ContextCompat.getMainExecutor(appContext),

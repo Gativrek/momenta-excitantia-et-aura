@@ -22,7 +22,10 @@ No streaming, no accounts, no network permission. It finds the music on your dev
 - **Restores your queue and position** after the app is killed or the phone reboots
 - **Themes:** ten built-in looks, each with its own vector pattern, and every color, pattern, glow and corner style editable live. Text stays readable whatever colors you pick
 - **Tag editing:** fix a song's title, artist, album or album artist, or rename a whole album at once. Changes are written into the files (MP3, FLAC, M4A, OGG/Opus), so other apps and your PC see them too
-- **Moments:** tap the bolt when a song hits and Momenta saves that part. Fine-tune each Moment to the tenth of a second, give it a name and a run-up, and an optional volume boost of up to +30%. While a Moment plays the cover rises into a heavenly light, the title catches fire and the theme's pattern lights up. Jump straight to a song's Moment from any list. Chill mode turns it all off for studying
+- **Moments:** tap the bolt when a song hits and Momenta saves that part. Fine-tune each Moment to the tenth of a second, give it a name and a run-up, and an optional volume boost of up to +50%. While a Moment plays the cover rises into a heavenly light, the title catches fire and the theme's pattern lights up. Jump straight to a song's Moment from any list. Chill mode turns it all off for studying
+- **Your Moments and the reel:** every Moment in one list, and a reel that plays only the Moments, one after another, fading from each to the next. Replay the same part twice and Momenta offers to make it a Moment
+- **Album themes:** pin a theme to an album and the whole app wears it while that album plays
+- **Liner notes:** a private note on a song or album, shown softly on Now Playing
 - **Listening history,** kept on the phone and nowhere else
 
 ## Tech stack

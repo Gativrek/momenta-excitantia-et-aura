@@ -7,6 +7,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,7 +28,6 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.style.TextOverflow
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -109,14 +109,15 @@ fun FieryTitle(
     glow: Float,
     style: TextStyle,
     modifier: Modifier = Modifier,
-    maxLines: Int = 2,
 ) {
-    Box(modifier) {
+    // Always one line: a long title scrolls (both layers together) instead of pushing the
+    // controls below it down.
+    Box(modifier.basicMarquee(iterations = Int.MAX_VALUE, initialDelayMillis = MARQUEE_DELAY_MS)) {
         Text(
             text = text,
             style = style,
-            maxLines = maxLines,
-            overflow = TextOverflow.Ellipsis,
+            maxLines = 1,
+            softWrap = false,
             modifier = Modifier.graphicsLayer { alpha = 1f - glow },
         )
         if (glow > 0f) {
@@ -151,8 +152,8 @@ fun FieryTitle(
                         brush = flames,
                         shadow = Shadow(color = FIRE_GLOW.copy(alpha = 0.9f * glow), blurRadius = 28f),
                     ),
-                maxLines = maxLines,
-                overflow = TextOverflow.Ellipsis,
+                maxLines = 1,
+                softWrap = false,
                 modifier =
                     Modifier
                         .graphicsLayer { alpha = glow }
@@ -200,6 +201,7 @@ fun Modifier.momentAura(
     }
 
 private const val RAYS = 14
+private const val MARQUEE_DELAY_MS = 1_500
 private const val RAYS_TURN_MS = 40_000
 private const val FLAME_MS = 900
 private const val EMBER_CYCLE_MS = 2_400
