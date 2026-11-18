@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -9,6 +10,21 @@ plugins {
     alias(libs.plugins.ktlint)
 }
 
+/**
+ * Release signing, read from `keystore.properties` in the project root (gitignored) or from
+ * environment variables of the same names, so no secret is ever committed. Without them the
+ * release APK is built unsigned. See KICKOFF.md "Releasing".
+ */
+val signingProps =
+    Properties().apply {
+        val file = rootProject.file("keystore.properties")
+        if (file.isFile) file.inputStream().use(::load)
+    }
+
+fun signingValue(key: String): String? = signingProps.getProperty(key) ?: System.getenv(key)
+
+val releaseKeystore = signingValue("MOMENTA_KEYSTORE")?.let(rootProject::file)?.takeIf { it.isFile }
+
 android {
     namespace = "io.github.gativrek.momenta"
     compileSdk = 36
@@ -18,13 +34,25 @@ android {
         minSdk = 26
         targetSdk = 36
         versionCode = 1
-        versionName = "0.0.1"
+        versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (releaseKeystore != null) {
+            create("release") {
+                storeFile = releaseKeystore
+                storePassword = signingValue("MOMENTA_KEYSTORE_PASSWORD")
+                keyAlias = signingValue("MOMENTA_KEY_ALIAS")
+                keyPassword = signingValue("MOMENTA_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.findByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))

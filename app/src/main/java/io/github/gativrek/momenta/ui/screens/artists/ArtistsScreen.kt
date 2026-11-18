@@ -63,7 +63,7 @@ fun ArtistsScreen(
 }
 
 @Composable
-private fun ArtistRow(
+fun ArtistRow(
     artist: Artist,
     onClick: () -> Unit,
 ) {

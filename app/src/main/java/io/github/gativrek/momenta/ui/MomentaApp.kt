@@ -2,11 +2,14 @@ package io.github.gativrek.momenta.ui
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -20,11 +23,14 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import io.github.gativrek.momenta.R
 import io.github.gativrek.momenta.ui.components.MiniPlayer
 import io.github.gativrek.momenta.ui.navigation.MomentaNavHost
 import io.github.gativrek.momenta.ui.navigation.NOW_PLAYING_ROUTE
 import io.github.gativrek.momenta.ui.navigation.QUEUE_ROUTE
+import io.github.gativrek.momenta.ui.navigation.SEARCH_ROUTE
 import io.github.gativrek.momenta.ui.navigation.TopLevelDestination
+import io.github.gativrek.momenta.ui.screens.NavArgs
 import io.github.gativrek.momenta.ui.screens.nowplaying.PlayerViewModel
 import io.github.gativrek.momenta.ui.screens.permission.rememberNotificationPermissionRequest
 
@@ -39,12 +45,29 @@ fun MomentaApp() {
     val currentDestination = backStackEntry?.destination
     // Now Playing and the queue are full-screen: no mini-player, no tabs.
     val fullScreen = currentDestination?.route in setOf(NOW_PLAYING_ROUTE, QUEUE_ROUTE)
+    // Search keeps the mini-player (you start music from it) but not the tabs.
+    val showTabs = !fullScreen && currentDestination?.route != SEARCH_ROUTE
+    // The tab whose root list is showing, if any: it gets a title bar with the search button.
+    // Detail screens have their own top bar. Folders use one route for every level, root = "".
+    val tabRoot =
+        TopLevelDestination.entries.firstOrNull { tab ->
+            currentDestination?.route?.substringBefore('?') == "${tab.route}/list" &&
+                backStackEntry?.arguments?.getString(NavArgs.PATH).isNullOrEmpty()
+        }
 
     // One PlayerViewModel for the whole app (scoped to the Activity), shared by both players.
     val playerViewModel: PlayerViewModel = viewModel(factory = PlayerViewModel.Factory)
     val requestNotifications = rememberNotificationPermissionRequest()
 
     Scaffold(
+        topBar = {
+            if (tabRoot != null) {
+                TabTopBar(
+                    title = stringResource(tabRoot.labelRes),
+                    onSearch = { navController.navigate(SEARCH_ROUTE) { launchSingleTop = true } },
+                )
+            }
+        },
         bottomBar = {
             if (!fullScreen) {
                 Column {
@@ -52,7 +75,7 @@ fun MomentaApp() {
                         playerViewModel = playerViewModel,
                         onExpand = { navController.navigate(NOW_PLAYING_ROUTE) { launchSingleTop = true } },
                     )
-                    BottomBar(navController, currentDestination)
+                    if (showTabs) BottomBar(navController, currentDestination)
                 }
             }
         },
@@ -64,6 +87,22 @@ fun MomentaApp() {
             modifier = Modifier.padding(innerPadding),
         )
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TabTopBar(
+    title: String,
+    onSearch: () -> Unit,
+) {
+    TopAppBar(
+        title = { Text(title) },
+        actions = {
+            IconButton(onClick = onSearch) {
+                Icon(painterResource(R.drawable.ic_search), contentDescription = stringResource(R.string.action_search))
+            }
+        },
+    )
 }
 
 @Composable

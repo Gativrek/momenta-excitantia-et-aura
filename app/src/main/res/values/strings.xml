@@ -104,6 +104,21 @@
         <item quantity="other">%d songs can\'t be found</item>
     </plurals>
 
+    <!-- Playback errors. %s is the track title. -->
+    <string name="unknown_track">Unknown track</string>
+    <string name="error_track_missing">Skipped \"%s\": the file is gone.</string>
+    <string name="error_track_unplayable">Skipped \"%s\": this file can\'t be played.</string>
+
+    <!-- Search -->
+    <string name="action_search">Search</string>
+    <string name="search_placeholder">Songs, albums, artists</string>
+    <string name="search_clear">Clear search</string>
+    <string name="search_hint_title">Search your library</string>
+    <string name="search_hint_body">Type part of a title, artist or album. Accents and capitals don\'t matter.</string>
+    <string name="search_no_results_title">No results</string>
+    <!-- %s is what the user typed. -->
+    <string name="search_no_results_body">Nothing matches \"%s\".</string>
+
     <string name="songs_empty_title">No music found</string>
     <string name="songs_empty_body">Copy audio files to this phone, for example into the Music folder, and they\'ll appear here.</string>
 </resources>

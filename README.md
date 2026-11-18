@@ -4,12 +4,13 @@
 
 No streaming, no accounts, no network permission. It finds the music on your device and plays it reliably: in the background, with the screen off, over Bluetooth, and it gets out of the way when something else needs the speaker.
 
-> **Status:** pre-development. See [ROADMAP.md](ROADMAP.md).
+> **Status:** feature-complete for v1.0; the real-device checklist is next. See [ROADMAP.md](ROADMAP.md).
 
 ## Features (v1 target)
 
 - **Local library:** reads audio from the device's MediaStore (MP3, FLAC, M4A/AAC, OGG/Opus, WAV)
 - **Browse** by song, album, artist and folder
+- **Search** across songs, albums and artists (ignores case and accents)
 - **Background playback** through a foreground media service, with lock-screen and notification controls
 - **Bluetooth and headset buttons**, with track metadata on car and headset displays
 - **Audio focus:** pauses for calls and other apps, ducks for navigation prompts
@@ -48,6 +49,8 @@ cd momenta-excitantia-et-aura
 ./gradlew assembleDebug
 # APK: app/build/outputs/apk/debug/
 ```
+
+Release builds are signed from a local `keystore.properties`; see [KICKOFF.md](KICKOFF.md#releasing).
 
 ## Permissions
 

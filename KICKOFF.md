@@ -111,6 +111,10 @@ Single Gradle module (`:app`) for v1. Split into modules only if build times hur
   - Restore runs in `PlaybackService.onCreate`, against MediaStore: missing tracks are dropped (`SavedQueue.keepOnly`, unit-tested). The player is **not prepared**, so no notification pops up at launch. `PlayerConnection` prepares on the first play.
   - The saved queue is excluded from device transfer (`data_extraction_rules.xml`): MediaStore IDs mean nothing on another phone.
 
+- **As built (Phase 6):**
+  - Unplayable tracks: `PlaybackService` handles `onPlayerError` by removing the current item, moving to the next one in play order (shuffle-aware; repeat-one doesn't retry the broken track) and showing a toast ("the file is gone" for I/O errors, "can't be played" otherwise). Otherwise one deleted file would stall the whole queue. ExoPlayer opens the next file ahead of time, so a file deleted *after* it was preloaded still plays from the open handle.
+  - Library load time is logged (`LibraryRepository`, debug level) to keep criterion 12 measurable.
+
 ### Playlists (Room)
 - **MediaStore IDs are not stable forever.** They can change after a rescan, SD card remount or reinstall of files. Store a fingerprint with each entry:
   `PlaylistEntry(playlistId, position, mediaStoreId, relativePath, displayName, durationMs, sizeBytes)`.
@@ -141,6 +145,11 @@ Single Gradle module (`:app`) for v1. Split into modules only if build times hur
   - Folders: one screen for every level, with the path as a URI-encoded nav argument (`""` = root). "Play all" / "Shuffle" in a folder include its subfolders.
   - "Shuffle" plays a shuffled copy of the collection with the player's shuffle mode off. The shuffle toggle arrives in Phase 4.
   - Detail top bars pass `windowInsets = WindowInsets(0)`: the root Scaffold already pads below the status bar.
+- **As built (Phase 6):**
+  - Each tab's root list gets a title bar (from the root Scaffold) with a search button. Detail screens keep their own top bars.
+  - Search is its own route (`search`), outside the tabs. The bottom bar hides but the mini-player stays, since you start music from it. Opening an album or artist result goes into that tab's graph, and Back returns to the search with its query (kept in `SavedStateHandle`).
+  - `LibrarySearch` (pure, unit-tested) scans the in-memory library on each settled keystroke (150 ms debounce). There's no index: a scan of 5,000 tracks takes milliseconds. Matching folds case, accents, punctuation and the ligatures NFD leaves alone (Æ, Œ, ß, Ø). Every query word must appear somewhere in the item. Ranking: name starts with the query, then a word of the name does, then the rest. There is no fuzzy or typo matching.
+  - Tapping a song in search plays the matching songs as the queue.
 
 ### Graphics
 - **Line icons only** (stroke, no fill: 24×24, stroke width 2, round caps and joins). No emojis anywhere in the UI or resources.
@@ -164,6 +173,20 @@ Single Gradle module (`:app`) for v1. Split into modules only if build times hur
 - **Instrumented (minimal):** Room DAO tests, plus a smoke test that the service starts and a `MediaController` connects.
 - **Emulator:** AVD `Pixel_9_API_37` (Pixel 9, API 37, Google Play image). Use it for day-to-day checks; it doesn't replace the real-device checklist.
 - **Manual device checklist:** the 14 success criteria in GOALS.md. Run the playback ones (1–8) at the end of Phase 2 and the full list before tagging v1.0. Test at least one real phone on Android 13+ and, if available, one older device or emulator on API 26–28 for the `DATA`-column and album-art branches.
+
+## Releasing
+
+- Release builds are minified with R8 and signed from `keystore.properties` in the project root (gitignored), or from environment variables of the same names:
+  ```properties
+  MOMENTA_KEYSTORE=/absolute/or/project-relative/path/to/release.jks
+  MOMENTA_KEYSTORE_PASSWORD=...
+  MOMENTA_KEY_ALIAS=...
+  MOMENTA_KEY_PASSWORD=...
+  ```
+  Without these, `assembleRelease` produces `app-release-unsigned.apk`. Keep the keystore outside the repo and backed up: losing it means future updates can't install over the old app.
+- Build: `./gradlew assembleRelease`; output: `app/build/outputs/apk/release/app-release.apk`.
+- Bump `versionCode` and `versionName` in `app/build.gradle.kts`, tag `vX.Y.Z`, and attach the APK to a GitHub Release.
+- Measured on the `Pixel_9_API_37` emulator with 5,163 tracks (Phase 6): release build first frame 300 to 560 ms, song list on screen within about 1 s of launch, MediaStore query 44 to 83 ms warm (448 ms on the first, cold run). The debug build is several times slower to start, so measure performance on release builds only.
 
 ## Definition of done (per task)
 

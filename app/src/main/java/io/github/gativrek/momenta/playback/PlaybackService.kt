@@ -6,10 +6,12 @@ import android.content.Intent
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
+import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
@@ -201,7 +203,41 @@ class PlaybackService : MediaSessionService() {
 
     // endregion
 
+    /**
+     * A track that can't be played (deleted while queued or playing, unreadable, or in a
+     * format the device can't decode) would otherwise leave the player stuck in an error
+     * state. Drop it from the queue, say so, and carry on with the next track in play order.
+     */
+    private fun skipUnplayable(error: PlaybackException) {
+        val exo = player.exoPlayer
+        if (exo.mediaItemCount == 0) return
+        val index = exo.currentMediaItemIndex
+        val title = exo.currentMediaItem?.mediaMetadata?.title ?: getString(R.string.unknown_track)
+        Log.w(TAG, "Skipping unplayable item $index (${error.errorCodeName})", error)
+        // Next in play order (shuffle-aware); repeat-one must not pick the same broken track.
+        val repeat = if (exo.repeatMode == Player.REPEAT_MODE_ONE) Player.REPEAT_MODE_ALL else exo.repeatMode
+        val next = exo.currentTimeline.getNextWindowIndex(index, repeat, exo.shuffleModeEnabled)
+
+        exo.removeMediaItem(index)
+        if (next != C.INDEX_UNSET && next != index && exo.mediaItemCount > 0) {
+            exo.seekTo(if (next > index) next - 1 else next, 0)
+            exo.prepare()
+        } else {
+            // Nothing playable left after it: stop cleanly instead of sitting in the error state.
+            exo.stop()
+        }
+        val message = if (error.isFileGone()) R.string.error_track_missing else R.string.error_track_unplayable
+        Toast.makeText(this, getString(message, title), Toast.LENGTH_LONG).show()
+    }
+
+    private fun PlaybackException.isFileGone() =
+        errorCode == PlaybackException.ERROR_CODE_IO_FILE_NOT_FOUND ||
+            errorCode == PlaybackException.ERROR_CODE_IO_NO_PERMISSION ||
+            errorCode == PlaybackException.ERROR_CODE_IO_UNSPECIFIED
+
     private inner class PlayerEvents : Player.Listener {
+        override fun onPlayerError(error: PlaybackException) = skipUnplayable(error)
+
         override fun onEvents(
             player: Player,
             events: Player.Events,

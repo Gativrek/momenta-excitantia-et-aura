@@ -52,9 +52,9 @@ Each phase ends in something runnable. A phase is done when its checkboxes are t
 - [x] Re-match entries after a rescan; show unresolved entries as "missing" instead of dropping them (criterion 14; on the emulator: a moved file followed, a renamed file showed "Missing" and resolved again when restored)
 
 ### Phase 6: Polish → v1.0
-- [ ] Search across songs, albums and artists
-- [ ] Empty states and error states (no music, permission revoked, file deleted mid-play)
-- [ ] Performance pass on a 5k-track library (criterion 12)
+- [x] Search across songs, albums and artists
+- [x] Empty states and error states (no music, permission revoked, file deleted mid-play)
+- [x] Performance pass on a 5k-track library (criterion 12; emulator, release build: list on screen within ~1 s with 5,163 tracks. Confirm on the real device with the checklist)
 - [ ] Run the full manual checklist in KICKOFF.md on a real device
 - [ ] Signed release APK attached to a GitHub Release, `v1.0.0` tag
 

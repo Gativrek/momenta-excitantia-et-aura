@@ -4,6 +4,7 @@ import android.content.ContentResolver
 import android.database.ContentObserver
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.provider.MediaStore
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
@@ -81,7 +82,10 @@ class LibraryRepository(
 
     private suspend fun loadOrEmpty(): List<Track> =
         try {
-            source.queryTracks()
+            val start = SystemClock.elapsedRealtime()
+            source.queryTracks().also {
+                Log.d(TAG, "Loaded ${it.size} tracks in ${SystemClock.elapsedRealtime() - start} ms")
+            }
         } catch (e: SecurityException) {
             // Permission missing or revoked. The UI gates on the permission, so this is a race.
             Log.w(TAG, "Audio permission missing while querying MediaStore", e)

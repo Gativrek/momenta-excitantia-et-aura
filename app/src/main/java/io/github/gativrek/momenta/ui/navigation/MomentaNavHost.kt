@@ -21,6 +21,7 @@ import io.github.gativrek.momenta.ui.screens.nowplaying.PlayerViewModel
 import io.github.gativrek.momenta.ui.screens.playlists.PlaylistDetailScreen
 import io.github.gativrek.momenta.ui.screens.playlists.PlaylistsScreen
 import io.github.gativrek.momenta.ui.screens.queue.QueueScreen
+import io.github.gativrek.momenta.ui.screens.search.SearchScreen
 import io.github.gativrek.momenta.ui.screens.songs.SongsScreen
 
 /** Full-screen player, opened from the mini-player. Not a tab, so the bottom bar hides. */
@@ -28,6 +29,9 @@ const val NOW_PLAYING_ROUTE = "now_playing"
 
 /** The queue, opened from Now Playing. Also full-screen. */
 const val QUEUE_ROUTE = "queue"
+
+/** Search, opened from the top bar of any tab. Not inside a tab: results open in their own tab. */
+const val SEARCH_ROUTE = "search"
 
 /**
  * Each tab is a nested graph whose route is the tab's route. Detail screens live inside
@@ -125,6 +129,15 @@ fun MomentaNavHost(
                 viewModel = playerViewModel,
                 onCollapse = { navController.popBackStack() },
                 onOpenQueue = { navController.navigate(QUEUE_ROUTE) { launchSingleTop = true } },
+            )
+        }
+
+        composable(SEARCH_ROUTE) {
+            SearchScreen(
+                onBack = { navController.popBackStack() },
+                onAlbumClick = { navController.navigate(albumRoute(albumsTab, it.id)) },
+                onArtistClick = { navController.navigate("$artistsTab/artist/${it.id}") },
+                onPlayStarted = onPlayStarted,
             )
         }
 
