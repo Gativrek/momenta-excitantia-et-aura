@@ -117,6 +117,13 @@
     <string name="pin_theme_none">None: use my theme</string>
     <string name="pin_theme_own">My theme, as it is now</string>
     <string name="action_close">Close</string>
+    <string name="library_folders">Library folders</string>
+    <string name="library_folders_all">Every folder with audio is in your library</string>
+    <plurals name="library_folders_hidden">
+        <item quantity="one">%d folder left out</item>
+        <item quantity="other">%d folders left out</item>
+    </plurals>
+    <string name="library_folders_body">Choose which folders are part of your library. Messaging apps, recorders and system sounds start out switched off.</string>
     <string name="action_liner_note">Liner note</string>
     <string name="note_add">Add a liner note</string>
     <string name="note_hint">Just for you: a memory, where you first heard it, why it matters. Shown softly while it plays.</string>

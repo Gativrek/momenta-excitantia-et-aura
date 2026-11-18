@@ -10,6 +10,7 @@ No streaming, no accounts, no network permission. It finds the music on your dev
 
 - **Local library:** reads audio from the device's MediaStore (MP3, FLAC, M4A/AAC, OGG/Opus, WAV)
 - **Browse** by song, album, artist and folder
+- **Library folders:** choose which folders count as music. Messaging apps (WhatsApp, Telegram and the like), voice recorders and ringtones start out left out
 - **Search** across songs, albums and artists (ignores case and accents)
 - **Background playback** through a foreground media service, with lock-screen and notification controls
 - **Bluetooth and headset buttons**, with track metadata on car and headset displays

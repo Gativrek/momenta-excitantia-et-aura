@@ -3,6 +3,7 @@ package io.github.gativrek.momenta
 import android.content.Context
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.preferencesDataStoreFile
+import io.github.gativrek.momenta.data.library.LibraryFoldersStore
 import io.github.gativrek.momenta.data.library.LibraryRepository
 import io.github.gativrek.momenta.data.library.MediaStoreSource
 import io.github.gativrek.momenta.data.moments.MomentsRepository
@@ -51,6 +52,17 @@ class AppContainer(
         LibraryRepository(
             resolver = appContext.contentResolver,
             source = mediaStoreSource,
+            folderChoices = libraryFolders.choices,
+            scope = applicationScope,
+        )
+    }
+
+    /** Which folders are in the library. */
+    val libraryFolders: LibraryFoldersStore by lazy {
+        LibraryFoldersStore(
+            PreferenceDataStoreFactory.create(scope = applicationScope + Dispatchers.IO) {
+                appContext.preferencesDataStoreFile(LIBRARY_FOLDERS_FILE)
+            },
             scope = applicationScope,
         )
     }
@@ -132,6 +144,7 @@ class AppContainer(
         const val PLAYBACK_STATE_FILE = "playback_state"
         const val MOMENTS_SETTINGS_FILE = "moments_settings"
         const val THEME_PINS_FILE = "theme_pins"
+        const val LIBRARY_FOLDERS_FILE = "library_folders"
 
         /** Backed up like any setting: a theme is worth keeping on a new phone. */
         const val APPEARANCE_FILE = "appearance"

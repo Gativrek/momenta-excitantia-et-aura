@@ -103,6 +103,7 @@ private fun FolderContent(
             DetailTopBar(title = contents.path.trimEnd('/').substringAfterLast('/'), onBack = onBack)
         }
         LazyColumn(modifier = Modifier.fillMaxSize()) {
+            if (isRoot) item(key = "library_folders", contentType = "library_folders") { LibraryFoldersEntry() }
             item(key = "actions", contentType = "actions") {
                 // Plays everything below this folder, subfolders included.
                 PlayShuffleButtons(onPlayAll = onPlayAll, onShuffle = onShuffle)

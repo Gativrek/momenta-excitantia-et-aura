@@ -217,189 +217,206 @@ fun NowPlayingContent(
                 }
             }
 
-            // Square art filling the width. BoxWithConstraints gives the real width, so the
-            // thumbnail is requested at display size instead of a guess. During a Moment it
-            // rises a little into a heavenly light.
-            Spacer(Modifier.height(16.dp))
-            BoxWithConstraints(
-                modifier = Modifier.fillMaxWidth().aspectRatio(1f),
-                contentAlignment = Alignment.Center,
+            // Everything under the top row sits at the bottom; the cover takes what height is left,
+            // up to a square as wide as the screen, so a long title, a liner note or a tall font
+            // shrinks the cover instead of pushing the controls off the screen.
+            Column(
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Bottom,
             ) {
-                val coverSize = maxWidth
-                HeavenlyLight(glow = glow, color = spark, modifier = Modifier.requiredSize(coverSize * LIGHT_SCALE))
-                Box(
-                    Modifier.graphicsLayer {
-                        val scale = 1f + COVER_RISE * glow
-                        scaleX = scale
-                        scaleY = scale
-                    },
+                // Square art. BoxWithConstraints gives the real size, so the thumbnail is requested
+                // at display size instead of a guess. During a Moment it rises a little into a
+                // heavenly light.
+                Spacer(Modifier.height(16.dp))
+                BoxWithConstraints(
+                    modifier = Modifier.weight(1f, fill = false).aspectRatio(1f, matchHeightConstraintsFirst = true),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    ArtworkImage(artwork = nowPlaying?.artwork, size = coverSize)
+                    val coverSize = maxWidth
+                    HeavenlyLight(glow = glow, color = spark, modifier = Modifier.requiredSize(coverSize * LIGHT_SCALE))
+                    Box(
+                        Modifier.graphicsLayer {
+                            val scale = 1f + COVER_RISE * glow
+                            scaleX = scale
+                            scaleY = scale
+                        },
+                    ) {
+                        ArtworkImage(artwork = nowPlaying?.artwork, size = coverSize)
+                    }
+                    // The notes float over the bottom of the cover, so they never push the controls off a
+                    // short screen.
+                    Box(Modifier.align(Alignment.BottomCenter).padding(horizontal = 12.dp, vertical = 4.dp)) {
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = justSavedMoment,
+                            enter = fadeIn(),
+                            exit = fadeOut(),
+                        ) { SavedNote(onOpenGear) }
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = suggestion != null && !justSavedMoment,
+                            enter = fadeIn(),
+                            exit = fadeOut(),
+                        ) { suggestion?.let { SuggestionNote(it, onSaveSuggestion, onDismissSuggestion) } }
+                    }
                 }
-            }
 
-            Spacer(Modifier.height(32.dp))
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    FieryTitle(
-                        text = nowPlaying?.title.orEmpty(),
-                        glow = glow,
-                        style = MaterialTheme.typography.headlineSmall,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Text(
-                        text =
-                            stringResource(
-                                R.string.track_subtitle,
-                                nowPlaying?.artist ?: stringResource(R.string.unknown_artist),
-                                nowPlaying?.album ?: stringResource(R.string.unknown_album),
-                            ),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                    )
-                    // The liner note, quietly: a line of the user's own under the song.
-                    AnimatedVisibility(visible = linerNote != null, enter = fadeIn(), exit = fadeOut()) {
+                Spacer(Modifier.height(32.dp))
+                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        FieryTitle(
+                            text = nowPlaying?.title.orEmpty(),
+                            glow = glow,
+                            style = MaterialTheme.typography.headlineSmall,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
                         Text(
-                            text = linerNote.orEmpty(),
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontStyle = FontStyle.Italic,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = LINER_NOTE_ALPHA),
-                            maxLines = 3,
+                            text =
+                                stringResource(
+                                    R.string.track_subtitle,
+                                    nowPlaying?.artist ?: stringResource(R.string.unknown_artist),
+                                    nowPlaying?.album ?: stringResource(R.string.unknown_album),
+                                ),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                        )
+                        // The liner note, quietly: a line of the user's own under the song.
+                        AnimatedVisibility(visible = linerNote != null, enter = fadeIn(), exit = fadeOut()) {
+                            Text(
+                                text = linerNote.orEmpty(),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontStyle = FontStyle.Italic,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = LINER_NOTE_ALPHA),
+                                maxLines = 3,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                            )
+                        }
+                    }
+                    IconButton(onClick = onSaveMoment, modifier = Modifier.size(56.dp)) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_moment),
+                            contentDescription = stringResource(R.string.moment_save),
+                            tint =
+                                if (moments.isNotEmpty()) {
+                                    MaterialTheme.colorScheme.moment
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                },
+                            modifier = Modifier.size(32.dp),
                         )
                     }
                 }
-                IconButton(onClick = onSaveMoment, modifier = Modifier.size(56.dp)) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_moment),
-                        contentDescription = stringResource(R.string.moment_save),
-                        tint =
-                            if (moments.isNotEmpty()) {
-                                MaterialTheme.colorScheme.moment
+
+                SeekBar(
+                    positionMs = positionMs,
+                    durationMs = state.durationMs,
+                    moments = moments,
+                    onSeek = onSeek,
+                    modifier = Modifier.padding(top = 24.dp),
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    ModeButton(
+                        iconRes = R.drawable.ic_shuffle,
+                        label =
+                            stringResource(
+                                if (state.shuffle) R.string.action_shuffle_on else R.string.action_shuffle_off,
+                            ),
+                        active = state.shuffle,
+                        onClick = onToggleShuffle,
+                    )
+                    SkipButton(
+                        next = false,
+                        enabled = state.hasPrevious,
+                        onClick = onPrevious,
+                        modifier = Modifier.size(64.dp),
+                        iconSize = 32.dp,
+                    )
+                    PlayPauseButton(
+                        playWhenReady = state.playWhenReady,
+                        onClick = onTogglePlayPause,
+                        filled = true,
+                        iconSize = 36.dp,
+                        modifier = Modifier.size(80.dp),
+                    )
+                    SkipButton(
+                        next = true,
+                        enabled = state.hasNext,
+                        onClick = onNext,
+                        modifier = Modifier.size(64.dp),
+                        iconSize = 32.dp,
+                    )
+                    ModeButton(
+                        iconRes =
+                            if (state.repeatMode ==
+                                Player.REPEAT_MODE_ONE
+                            ) {
+                                R.drawable.ic_repeat_one
                             } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
+                                R.drawable.ic_repeat
                             },
-                        modifier = Modifier.size(32.dp),
+                        label =
+                            stringResource(
+                                when (state.repeatMode) {
+                                    Player.REPEAT_MODE_ALL -> R.string.action_repeat_all
+                                    Player.REPEAT_MODE_ONE -> R.string.action_repeat_one
+                                    else -> R.string.action_repeat_off
+                                },
+                            ),
+                        active = state.repeatMode != Player.REPEAT_MODE_OFF,
+                        onClick = onCycleRepeat,
                     )
                 }
-            }
 
-            SeekBar(
-                positionMs = positionMs,
-                durationMs = state.durationMs,
-                moments = moments,
-                onSeek = onSeek,
-                modifier = Modifier.padding(top = 24.dp),
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                ModeButton(
-                    iconRes = R.drawable.ic_shuffle,
-                    label =
-                        stringResource(
-                            if (state.shuffle) R.string.action_shuffle_on else R.string.action_shuffle_off,
-                        ),
-                    active = state.shuffle,
-                    onClick = onToggleShuffle,
-                )
-                SkipButton(
-                    next = false,
-                    enabled = state.hasPrevious,
-                    onClick = onPrevious,
-                    modifier = Modifier.size(64.dp),
-                    iconSize = 32.dp,
-                )
-                PlayPauseButton(
-                    playWhenReady = state.playWhenReady,
-                    onClick = onTogglePlayPause,
-                    filled = true,
-                    iconSize = 36.dp,
-                    modifier = Modifier.size(80.dp),
-                )
-                SkipButton(
-                    next = true,
-                    enabled = state.hasNext,
-                    onClick = onNext,
-                    modifier = Modifier.size(64.dp),
-                    iconSize = 32.dp,
-                )
-                ModeButton(
-                    iconRes =
-                        if (state.repeatMode ==
-                            Player.REPEAT_MODE_ONE
-                        ) {
-                            R.drawable.ic_repeat_one
-                        } else {
-                            R.drawable.ic_repeat
-                        },
-                    label =
-                        stringResource(
-                            when (state.repeatMode) {
-                                Player.REPEAT_MODE_ALL -> R.string.action_repeat_all
-                                Player.REPEAT_MODE_ONE -> R.string.action_repeat_one
-                                else -> R.string.action_repeat_off
-                            },
-                        ),
-                    active = state.repeatMode != Player.REPEAT_MODE_OFF,
-                    onClick = onCycleRepeat,
-                )
-            }
-
-            Spacer(Modifier.weight(1f))
-            AnimatedVisibility(visible = justSavedMoment, enter = fadeIn(), exit = fadeOut()) {
-                SavedNote(onOpenGear)
-            }
-            AnimatedVisibility(visible = suggestion != null && !justSavedMoment, enter = fadeIn(), exit = fadeOut()) {
-                suggestion?.let { SuggestionNote(it, onSaveSuggestion, onDismissSuggestion) }
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                TextButton(onClick = onOpenSleepTimer) {
-                    Icon(
-                        painterResource(R.drawable.ic_sleep_timer),
-                        contentDescription = null,
-                        modifier = Modifier.size(ButtonDefaults.IconSize),
-                    )
-                    Text(
-                        text = sleepTimerLabel(state.sleepTimer),
-                        modifier = Modifier.padding(start = ButtonDefaults.IconSpacing),
-                    )
-                }
-                if (moments.isNotEmpty()) {
-                    TextButton(onClick = onOpenGear) {
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    TextButton(onClick = onOpenSleepTimer) {
                         Icon(
-                            painterResource(R.drawable.ic_moment_gear),
-                            contentDescription = stringResource(R.string.moment_gear_title),
-                            tint = MaterialTheme.colorScheme.moment,
+                            painterResource(R.drawable.ic_sleep_timer),
+                            contentDescription = null,
                             modifier = Modifier.size(ButtonDefaults.IconSize),
                         )
                         Text(
-                            text = moments.size.toString(),
-                            color = MaterialTheme.colorScheme.moment,
+                            text = sleepTimerLabel(state.sleepTimer),
                             modifier = Modifier.padding(start = ButtonDefaults.IconSpacing),
                         )
                     }
-                }
-                TextButton(onClick = onOpenQueue) {
-                    Icon(
-                        painterResource(R.drawable.ic_queue),
-                        contentDescription = null,
-                        modifier = Modifier.size(ButtonDefaults.IconSize),
-                    )
-                    Text(
-                        text = stringResource(R.string.action_queue),
-                        modifier = Modifier.padding(start = ButtonDefaults.IconSpacing),
-                    )
+                    if (moments.isNotEmpty()) {
+                        TextButton(onClick = onOpenGear) {
+                            Icon(
+                                painterResource(R.drawable.ic_moment_gear),
+                                contentDescription = stringResource(R.string.moment_gear_title),
+                                tint = MaterialTheme.colorScheme.moment,
+                                modifier = Modifier.size(ButtonDefaults.IconSize),
+                            )
+                            Text(
+                                text = moments.size.toString(),
+                                color = MaterialTheme.colorScheme.moment,
+                                modifier = Modifier.padding(start = ButtonDefaults.IconSpacing),
+                            )
+                        }
+                    }
+                    TextButton(onClick = onOpenQueue) {
+                        Icon(
+                            painterResource(R.drawable.ic_queue),
+                            contentDescription = null,
+                            modifier = Modifier.size(ButtonDefaults.IconSize),
+                        )
+                        Text(
+                            text = stringResource(R.string.action_queue),
+                            modifier = Modifier.padding(start = ButtonDefaults.IconSpacing),
+                        )
+                    }
                 }
             }
         }

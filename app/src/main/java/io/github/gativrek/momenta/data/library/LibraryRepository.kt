@@ -15,6 +15,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
@@ -31,6 +32,7 @@ import kotlinx.coroutines.flow.shareIn
 class LibraryRepository(
     private val resolver: ContentResolver,
     private val source: MediaStoreSource,
+    folderChoices: Flow<FolderChoices>,
     scope: CoroutineScope,
 ) {
     /** Fires whenever any audio row is added, removed or edited (e.g. files copied over USB). */
@@ -54,10 +56,20 @@ class LibraryRepository(
      * Shared: all screens collecting this trigger a single query, and the result is kept
      * for 5 s after the last collector leaves so tab switches and rotation don't re-query.
      */
-    val tracks: Flow<List<Track>> =
+    private val allTracks: Flow<List<Track>> =
         merge(flowOf(Unit), mediaStoreChanges.debounce(CHANGE_DEBOUNCE_MS))
             .mapLatest { loadOrEmpty() }
             .shareIn(scope, SharingStarted.WhileSubscribed(KEEP_ALIVE_MS), replay = 1)
+
+    /** The library: every track in a folder the user keeps in it (see LibraryFolders). */
+    val tracks: Flow<List<Track>> =
+        combine(allTracks, folderChoices) { all, choices -> all.filter { choices.isIncluded(it.folderPath) } }
+            .flowOn(Dispatchers.Default)
+            .shareIn(scope, SharingStarted.WhileSubscribed(KEEP_ALIVE_MS), replay = 1)
+
+    /** Every folder with audio in it, included or not: for choosing what's in the library. */
+    val audioFolders: Flow<List<AudioFolder>> =
+        combine(allTracks, folderChoices, LibraryFolders::summarize).flowOn(Dispatchers.Default)
 
     /** Tracks sorted for the Songs list. Sorting runs off the main thread. */
     val tracksByTitle: Flow<List<Track>> =
