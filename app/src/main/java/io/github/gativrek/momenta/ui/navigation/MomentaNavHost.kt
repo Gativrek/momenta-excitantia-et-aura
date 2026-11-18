@@ -18,6 +18,7 @@ import io.github.gativrek.momenta.ui.screens.artists.ArtistsScreen
 import io.github.gativrek.momenta.ui.screens.folders.FoldersScreen
 import io.github.gativrek.momenta.ui.screens.nowplaying.NowPlayingScreen
 import io.github.gativrek.momenta.ui.screens.nowplaying.PlayerViewModel
+import io.github.gativrek.momenta.ui.screens.playlists.PlaylistDetailScreen
 import io.github.gativrek.momenta.ui.screens.playlists.PlaylistsScreen
 import io.github.gativrek.momenta.ui.screens.queue.QueueScreen
 import io.github.gativrek.momenta.ui.screens.songs.SongsScreen
@@ -106,8 +107,17 @@ fun MomentaNavHost(
             }
         }
 
-        navigation(route = TopLevelDestination.Playlists.route, startDestination = "playlists/list") {
-            composable("playlists/list") { PlaylistsScreen() }
+        val playlistsTab = TopLevelDestination.Playlists.route
+        navigation(route = playlistsTab, startDestination = "$playlistsTab/list") {
+            composable("$playlistsTab/list") {
+                PlaylistsScreen(onPlaylistClick = { navController.navigate("$playlistsTab/playlist/$it") })
+            }
+            composable(
+                route = "$playlistsTab/playlist/{${NavArgs.PLAYLIST_ID}}",
+                arguments = listOf(navArgument(NavArgs.PLAYLIST_ID) { type = NavType.LongType }),
+            ) {
+                PlaylistDetailScreen(onBack = { navController.popBackStack() }, onPlayStarted = onPlayStarted)
+            }
         }
 
         composable(NOW_PLAYING_ROUTE) {

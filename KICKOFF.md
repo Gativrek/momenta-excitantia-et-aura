@@ -116,6 +116,16 @@ Single Gradle module (`:app`) for v1. Split into modules only if build times hur
   `PlaylistEntry(playlistId, position, mediaStoreId, relativePath, displayName, durationMs, sizeBytes)`.
 - `TrackMatcher` resolution order: (1) ID matches and the file name matches → use it; (2) path + name match → re-link and update the ID; (3) name + duration (±1 s) + size match → re-link; (4) otherwise mark the entry missing and keep it.
 - Ordering is an explicit `position` column. Reorder in one transaction.
+- **As built (Phase 5):**
+  - Room 2.7 with KSP. Database `momenta.db`, version 1. The schema is exported to `app/schemas/` (commit it; later versions need migrations against it).
+  - Entries also store `title` and `artist`, so a missing entry still shows what it was.
+  - Rule 1 also refreshes the stored fingerprint when it has drifted. MediaStore keeps the ID when a file moves within one volume, so without the refresh the stored folder would go stale, and rules 2 and 3 couldn't find the file after a later rescan hands out a new ID.
+  - `PlaylistRepository` combines the DAO flows with the library track list and runs `TrackMatcher` on every change. Re-linked fingerprints are written back in the background, and that write re-emits the flow once with nothing left to fix. Missing entries stay in place, dimmed and labelled "Missing". Play and Shuffle skip them.
+  - The DAO renumbers positions `0..n-1` inside the same transaction after every move or remove, so there are never gaps (`PlaylistDaoTest`, instrumented).
+  - Duplicates are allowed: the same song can appear twice in a playlist.
+  - Drag to reorder and swipe to remove are shared by the queue and playlist screens (`ui/components/Reorderable.kt`).
+  - "Add to playlist" is in the track menu, the album top bar and the queue top bar (the whole queue in play order). Its dialog can also create a new playlist.
+  - The database is included in device-to-device transfer. MediaStore IDs differ on the new phone, but rule 2 (folder + file name) re-links the entries.
 
 ### UI
 - Compose + Material 3, with dynamic color on 12+ and a fixed palette below.

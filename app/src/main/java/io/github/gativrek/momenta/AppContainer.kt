@@ -5,6 +5,8 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.preferencesDataStoreFile
 import io.github.gativrek.momenta.data.library.LibraryRepository
 import io.github.gativrek.momenta.data.library.MediaStoreSource
+import io.github.gativrek.momenta.data.playlists.MomentaDatabase
+import io.github.gativrek.momenta.data.playlists.PlaylistRepository
 import io.github.gativrek.momenta.playback.PlaybackStateStore
 import io.github.gativrek.momenta.playback.PlayerConnection
 import kotlinx.coroutines.CoroutineScope
@@ -47,6 +49,12 @@ class AppContainer(
                 appContext.preferencesDataStoreFile(PLAYBACK_STATE_FILE)
             },
         )
+    }
+
+    val database: MomentaDatabase by lazy { MomentaDatabase.create(appContext) }
+
+    val playlistRepository: PlaylistRepository by lazy {
+        PlaylistRepository(database.playlistDao(), libraryRepository, applicationScope)
     }
 
     /** Connected/disconnected by MainActivity's onStart/onStop. */

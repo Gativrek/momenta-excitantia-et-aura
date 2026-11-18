@@ -9,13 +9,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -36,6 +42,7 @@ import io.github.gativrek.momenta.ui.components.TrackMenuButton
 import io.github.gativrek.momenta.ui.format.formatDuration
 import io.github.gativrek.momenta.ui.screens.AlbumDetailViewModel
 import io.github.gativrek.momenta.ui.screens.LibraryViewModels
+import io.github.gativrek.momenta.ui.screens.playlists.AddToPlaylistDialog
 
 @Composable
 fun AlbumDetailScreen(
@@ -81,8 +88,20 @@ fun AlbumDetailContent(
     queueActions: QueueActions,
     modifier: Modifier = Modifier,
 ) {
+    var addingToPlaylist by rememberSaveable { mutableStateOf(false) }
     Column(modifier.fillMaxSize()) {
-        DetailTopBar(title = album.title ?: stringResource(R.string.unknown_album), onBack = onBack)
+        DetailTopBar(
+            title = album.title ?: stringResource(R.string.unknown_album),
+            onBack = onBack,
+            actions = {
+                IconButton(onClick = { addingToPlaylist = true }) {
+                    Icon(
+                        painterResource(R.drawable.ic_playlist_add),
+                        contentDescription = stringResource(R.string.action_add_to_playlist),
+                    )
+                }
+            },
+        )
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             item(key = "header", contentType = "header") { AlbumHeader(album) }
             item(key = "actions", contentType = "actions") {
@@ -108,6 +127,9 @@ fun AlbumDetailContent(
                 )
             }
         }
+    }
+    if (addingToPlaylist) {
+        AddToPlaylistDialog(trackIds = album.tracks.map { it.id }, onDismiss = { addingToPlaylist = false })
     }
 }
 

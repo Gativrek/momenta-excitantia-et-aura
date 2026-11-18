@@ -3,6 +3,7 @@ package io.github.gativrek.momenta.ui.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -62,12 +63,13 @@ fun PlayShuffleButtons(
     }
 }
 
-/** Top bar for detail screens: back arrow plus a one-line title. */
+/** Top bar for detail screens: back arrow, a one-line title, optional actions. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailTopBar(
     title: String,
     onBack: () -> Unit,
+    actions: @Composable RowScope.() -> Unit = {},
 ) {
     TopAppBar(
         title = { Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
@@ -78,6 +80,7 @@ fun DetailTopBar(
         },
         // The root Scaffold already pads content below the status bar; without this the bar
         // would add the status-bar height a second time.
+        actions = actions,
         windowInsets = WindowInsets(0),
     )
 }

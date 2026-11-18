@@ -78,6 +78,7 @@ object NavArgs {
     const val ALBUM_ID = "albumId"
     const val ARTIST_ID = "artistId"
     const val PATH = "path"
+    const val PLAYLIST_ID = "playlistId"
 }
 
 /** Factories: pull the container from the Application and nav arguments from SavedStateHandle. */

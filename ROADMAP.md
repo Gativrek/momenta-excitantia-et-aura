@@ -46,10 +46,10 @@ Each phase ends in something runnable. A phase is done when its checkboxes are t
 - [x] Persist queue, index, position, shuffle and repeat to DataStore; restore paused on launch (criterion 9; emulator: force-stop while playing, reopened paused on the same track, position and shuffled order)
 
 ### Phase 5: Playlists
-- [ ] Room schema: `Playlist`, `PlaylistEntry` (ordered), with track identity per KICKOFF.md
-- [ ] Create / rename / delete playlists
-- [ ] Add to playlist (from a track, album or the queue); reorder and remove entries
-- [ ] Re-match entries after a rescan; show unresolved entries as "missing" instead of dropping them (criterion 14)
+- [x] Room schema: `Playlist`, `PlaylistEntry` (ordered), with track identity per KICKOFF.md
+- [x] Create / rename / delete playlists
+- [x] Add to playlist (from a track, album or the queue); reorder and remove entries
+- [x] Re-match entries after a rescan; show unresolved entries as "missing" instead of dropping them (criterion 14; on the emulator: a moved file followed, a renamed file showed "Missing" and resolved again when restored)
 
 ### Phase 6: Polish → v1.0
 - [ ] Search across songs, albums and artists
