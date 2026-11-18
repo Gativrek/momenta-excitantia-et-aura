@@ -30,6 +30,7 @@ import androidx.navigation.compose.rememberNavController
 import io.github.gativrek.momenta.R
 import io.github.gativrek.momenta.ui.components.MiniPlayer
 import io.github.gativrek.momenta.ui.navigation.APPEARANCE_ROUTE
+import io.github.gativrek.momenta.ui.navigation.AURA_ROUTE
 import io.github.gativrek.momenta.ui.navigation.MOMENTS_ROUTE
 import io.github.gativrek.momenta.ui.navigation.MomentaNavHost
 import io.github.gativrek.momenta.ui.navigation.NOW_PLAYING_ROUTE
@@ -52,8 +53,8 @@ fun MomentaApp() {
     val currentDestination = backStackEntry?.destination
     // Now Playing, the queue and Appearance are full-screen: no mini-player, no tabs.
     val fullScreen = currentDestination?.route in setOf(NOW_PLAYING_ROUTE, QUEUE_ROUTE, APPEARANCE_ROUTE)
-    // Search and Moments keep the mini-player (you start music from them) but not the tabs.
-    val showTabs = !fullScreen && currentDestination?.route !in setOf(SEARCH_ROUTE, MOMENTS_ROUTE)
+    // Search, Moments and Aura keep the mini-player (you start music from them) but not the tabs.
+    val showTabs = !fullScreen && currentDestination?.route !in setOf(SEARCH_ROUTE, MOMENTS_ROUTE, AURA_ROUTE)
     // The tab whose root list is showing, if any: it gets a title bar with the search button.
     // Detail screens have their own top bar. Folders use one route for every level, root = "".
     val tabRoot =
@@ -75,6 +76,7 @@ fun MomentaApp() {
                     title = stringResource(tabRoot.labelRes),
                     onSearch = { navController.navigate(SEARCH_ROUTE) { launchSingleTop = true } },
                     onMoments = { navController.navigate(MOMENTS_ROUTE) { launchSingleTop = true } },
+                    onAura = { navController.navigate(AURA_ROUTE) { launchSingleTop = true } },
                     onAppearance = { navController.navigate(APPEARANCE_ROUTE) { launchSingleTop = true } },
                 )
             }
@@ -108,6 +110,7 @@ private fun TabTopBar(
     title: String,
     onSearch: () -> Unit,
     onMoments: () -> Unit,
+    onAura: () -> Unit,
     onAppearance: () -> Unit,
 ) {
     TopAppBar(
@@ -119,6 +122,9 @@ private fun TabTopBar(
                     contentDescription = stringResource(R.string.action_moments),
                     tint = MaterialTheme.colorScheme.moment,
                 )
+            }
+            IconButton(onClick = onAura) {
+                Icon(painterResource(R.drawable.ic_aura), contentDescription = stringResource(R.string.action_aura))
             }
             IconButton(onClick = onSearch) {
                 Icon(painterResource(R.drawable.ic_search), contentDescription = stringResource(R.string.action_search))

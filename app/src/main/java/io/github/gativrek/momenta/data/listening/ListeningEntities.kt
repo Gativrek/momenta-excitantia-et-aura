@@ -60,3 +60,16 @@ data class PlayEntity(
     @ColumnInfo(name = "listened_ms") val listenedMs: Long,
     val completed: Boolean,
 )
+
+/** One listen joined with its song, for stats. */
+data class Listen(
+    val songId: Long,
+    val title: String,
+    val artist: String?,
+    val album: String?,
+    /** The song's folder, as last seen ("Music/Album/"). */
+    val folderPath: String,
+    /** Epoch milliseconds. */
+    val startedAt: Long,
+    val listenedMs: Long,
+)

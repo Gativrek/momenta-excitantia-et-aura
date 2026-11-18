@@ -189,6 +189,41 @@
     <string name="action_jump_to_moment">Jump to the Moment</string>
     <string name="action_moments">Your Moments</string>
     <string name="moments_title">Your Moments</string>
+    <string name="action_aura">Your Aura</string>
+    <string name="aura_title">Your Aura</string>
+    <string name="aura_share">Share your Aura</string>
+    <string name="aura_share_action">Share</string>
+    <string name="aura_era_lead">You’re in</string>
+    <string name="aura_era">the %1$s era</string>
+    <string name="aura_era_detail">%1$s · %2$d%% of your listening this past month</string>
+    <string name="aura_no_era_lead">Your era</string>
+    <string name="aura_no_era">Still forming</string>
+    <string name="aura_no_era_detail">Once one album takes over your listening, this becomes its era.</string>
+    <string name="aura_stat_listened">listening</string>
+    <plurals name="aura_stat_songs">
+        <item quantity="one">song heard</item>
+        <item quantity="other">songs heard</item>
+    </plurals>
+    <string name="aura_top_moments">Moments you keep hearing</string>
+    <string name="aura_top_songs">Most played</string>
+    <string name="aura_top_artists">Top artists</string>
+    <string name="aura_eras">Your eras</string>
+    <string name="aura_on_this_day">On this day</string>
+    <plurals name="aura_years_ago">
+        <item quantity="one">A year ago today</item>
+        <item quantity="other">%d years ago today</item>
+    </plurals>
+    <string name="aura_footer">Since %1$s. Worked out on this phone, and kept on it.</string>
+    <string name="aura_empty_title">Your Aura is still blank</string>
+    <string name="aura_empty_body">Play some music. What you listen to, and how, shows up here.</string>
+    <string name="aura_card_title">My Aura</string>
+    <string name="aura_card_hype">in hype</string>
+    <string name="aura_card_era_lead">I’m in</string>
+    <string name="aura_card_no_era_lead">My era</string>
+    <plurals name="aura_card_moment_heard">
+        <item quantity="one">my top Moment · heard once</item>
+        <item quantity="other">my top Moment · heard %d times</item>
+    </plurals>
     <string name="moments_play_reel">Play the reel</string>
     <string name="moments_reel_hint">Only the Moments, one after another with their run-ups, fading from one to the next</string>
     <string name="moments_empty_title">No Moments yet</string>

@@ -28,6 +28,7 @@ No streaming, no accounts, no network permission. It finds the music on your dev
 - **Album themes:** pin a theme to an album and the whole app wears it while that album plays
 - **Liner notes:** a private note on a song or album, shown softly on Now Playing
 - **Listening history,** kept on the phone and nowhere else
+- **Your Aura:** what your listening says about you, worked out on the phone: the era you're in (the album that took over your month), time in hype inside your Moments, your most played songs and artists, past eras, and what played on this day in earlier years. Share it as a card drawn in your own theme, through the share sheet, with no internet involved
 
 ## Tech stack
 

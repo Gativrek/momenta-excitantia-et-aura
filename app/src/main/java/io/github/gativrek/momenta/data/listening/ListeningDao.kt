@@ -7,6 +7,7 @@ import androidx.room.Transaction
 import androidx.room.Update
 import io.github.gativrek.momenta.data.library.Track
 import io.github.gativrek.momenta.data.playlists.TrackMatcher
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ListeningDao {
@@ -47,6 +48,17 @@ interface ListeningDao {
 
     @Query("SELECT COUNT(*) FROM plays")
     suspend fun playCount(): Int
+
+    /** Every listen, oldest first, with the song as it was last tagged: what the Aura profile reads. */
+    @Query(
+        """
+        SELECT s.id AS songId, s.title AS title, s.artist AS artist, s.album AS album, s.relative_path AS folderPath,
+            p.started_at AS startedAt, p.listened_ms AS listenedMs
+        FROM plays p JOIN songs s ON s.id = p.song_id
+        ORDER BY p.started_at
+        """,
+    )
+    fun observeListens(): Flow<List<Listen>>
 
     /**
      * The song row for [track], found by the same rules playlists use (same ID and file name;
