@@ -32,6 +32,20 @@
     <string name="action_next">Next track</string>
     <string name="action_previous">Previous track</string>
     <string name="action_collapse">Close player</string>
+    <string name="action_play_all">Play all</string>
+    <string name="action_shuffle">Shuffle</string>
+    <string name="action_back">Back</string>
+
+    <!-- Browse -->
+    <string name="various_artists">Various artists</string>
+    <!-- Header above a disc's tracks in a multi-disc album. -->
+    <string name="disc_number">Disc %d</string>
+    <string name="section_albums">Albums</string>
+    <string name="section_songs">Songs</string>
+    <plurals name="album_count">
+        <item quantity="one">%d album</item>
+        <item quantity="other">%d albums</item>
+    </plurals>
 
     <string name="songs_empty_title">No music found</string>
     <string name="songs_empty_body">Copy audio files to this phone, for example into the Music folder, and they\'ll appear here.</string>

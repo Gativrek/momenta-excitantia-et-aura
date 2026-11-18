@@ -109,10 +109,17 @@ class PlayerConnection(
         _state.value = PlayerUiState()
     }
 
+    /**
+     * "Shuffle all": a shuffled copy of [tracks], played from the top. The queue itself is
+     * shuffled (not the player's shuffle mode), so every track plays exactly once and the
+     * queue reads in play order. The shuffle toggle (Phase 4) uses Media3's mode instead.
+     */
+    fun shuffleTracks(tracks: List<Track>) = playTracks(tracks.shuffled(), 0)
+
     /** Replace the queue with [tracks] and start playing at [startIndex]. */
     fun playTracks(
         tracks: List<Track>,
-        startIndex: Int,
+        startIndex: Int = 0,
     ) {
         if (tracks.isEmpty()) return
         val items = tracks.map(MediaItemMapper::toMediaItem)

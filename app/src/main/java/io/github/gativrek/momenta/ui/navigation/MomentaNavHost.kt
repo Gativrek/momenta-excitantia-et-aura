@@ -1,11 +1,19 @@
 package io.github.gativrek.momenta.ui.navigation
 
+import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.navigation
+import androidx.navigation.navArgument
+import io.github.gativrek.momenta.ui.screens.NavArgs
+import io.github.gativrek.momenta.ui.screens.albums.AlbumDetailScreen
 import io.github.gativrek.momenta.ui.screens.albums.AlbumsScreen
+import io.github.gativrek.momenta.ui.screens.artists.ArtistDetailScreen
 import io.github.gativrek.momenta.ui.screens.artists.ArtistsScreen
 import io.github.gativrek.momenta.ui.screens.folders.FoldersScreen
 import io.github.gativrek.momenta.ui.screens.nowplaying.NowPlayingScreen
@@ -16,6 +24,14 @@ import io.github.gativrek.momenta.ui.screens.songs.SongsScreen
 /** Full-screen player, opened from the mini-player. Not a tab, so the bottom bar hides. */
 const val NOW_PLAYING_ROUTE = "now_playing"
 
+/**
+ * Each tab is a nested graph whose route is the tab's route. Detail screens live inside
+ * their tab's graph, so the tab stays highlighted and keeps its own back stack: open an
+ * album, switch to Songs and back, and the album is still there.
+ *
+ * Album detail is reachable from two tabs (Albums, Artists), so it's registered in both
+ * graphs under a tab-specific route.
+ */
 @Composable
 fun MomentaNavHost(
     navController: NavHostController,
@@ -28,13 +44,88 @@ fun MomentaNavHost(
         startDestination = TopLevelDestination.Songs.route,
         modifier = modifier,
     ) {
-        composable(TopLevelDestination.Songs.route) { SongsScreen(onPlayStarted = onPlayStarted) }
-        composable(TopLevelDestination.Albums.route) { AlbumsScreen() }
-        composable(TopLevelDestination.Artists.route) { ArtistsScreen() }
-        composable(TopLevelDestination.Folders.route) { FoldersScreen() }
-        composable(TopLevelDestination.Playlists.route) { PlaylistsScreen() }
+        navigation(route = TopLevelDestination.Songs.route, startDestination = "songs/list") {
+            composable("songs/list") { SongsScreen(onPlayStarted = onPlayStarted) }
+        }
+
+        val albumsTab = TopLevelDestination.Albums.route
+        navigation(route = albumsTab, startDestination = "$albumsTab/list") {
+            composable("$albumsTab/list") {
+                AlbumsScreen(onAlbumClick = { navController.navigate(albumRoute(albumsTab, it.id)) })
+            }
+            albumDetail(albumsTab, navController, onPlayStarted)
+        }
+
+        val artistsTab = TopLevelDestination.Artists.route
+        navigation(route = artistsTab, startDestination = "$artistsTab/list") {
+            composable("$artistsTab/list") {
+                ArtistsScreen(onArtistClick = { navController.navigate("$artistsTab/artist/${it.id}") })
+            }
+            composable(
+                route = "$artistsTab/artist/{${NavArgs.ARTIST_ID}}",
+                arguments = listOf(navArgument(NavArgs.ARTIST_ID) { type = NavType.LongType }),
+            ) {
+                ArtistDetailScreen(
+                    onBack = { navController.popBackStack() },
+                    onAlbumClick = { navController.navigate(albumRoute(artistsTab, it.id)) },
+                    onPlayStarted = onPlayStarted,
+                )
+            }
+            albumDetail(artistsTab, navController, onPlayStarted)
+        }
+
+        val foldersTab = TopLevelDestination.Folders.route
+        navigation(route = foldersTab, startDestination = "$foldersTab/list") {
+            // One destination for every level: the path is an optional query argument, "" = root.
+            composable(
+                route = "$foldersTab/list?${NavArgs.PATH}={${NavArgs.PATH}}",
+                arguments =
+                    listOf(
+                        navArgument(NavArgs.PATH) {
+                            type = NavType.StringType
+                            defaultValue = ""
+                        },
+                    ),
+            ) { entry ->
+                val path = entry.arguments?.getString(NavArgs.PATH).orEmpty()
+                FoldersScreen(
+                    isRoot = path.isEmpty(),
+                    // Paths contain "/" and spaces, so they're URI-encoded into the route.
+                    onFolderClick = {
+                        navController.navigate(
+                            "$foldersTab/list?${NavArgs.PATH}=${Uri.encode(it.path)}",
+                        )
+                    },
+                    onBack = { navController.popBackStack() },
+                    onPlayStarted = onPlayStarted,
+                )
+            }
+        }
+
+        navigation(route = TopLevelDestination.Playlists.route, startDestination = "playlists/list") {
+            composable("playlists/list") { PlaylistsScreen() }
+        }
+
         composable(NOW_PLAYING_ROUTE) {
             NowPlayingScreen(viewModel = playerViewModel, onCollapse = { navController.popBackStack() })
         }
+    }
+}
+
+private fun albumRoute(
+    tab: String,
+    albumId: Long,
+) = "$tab/album/$albumId"
+
+private fun NavGraphBuilder.albumDetail(
+    tab: String,
+    navController: NavHostController,
+    onPlayStarted: () -> Unit,
+) {
+    composable(
+        route = "$tab/album/{${NavArgs.ALBUM_ID}}",
+        arguments = listOf(navArgument(NavArgs.ALBUM_ID) { type = NavType.LongType }),
+    ) {
+        AlbumDetailScreen(onBack = { navController.popBackStack() }, onPlayStarted = onPlayStarted)
     }
 }

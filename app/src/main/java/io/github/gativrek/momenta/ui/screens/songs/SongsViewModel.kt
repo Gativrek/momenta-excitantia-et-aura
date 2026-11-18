@@ -40,6 +40,16 @@ class SongsViewModel(
         playerConnection.playTracks(tracks, index)
     }
 
+    fun playAll() {
+        val tracks = (uiState.value as? SongsUiState.Loaded)?.tracks ?: return
+        playerConnection.playTracks(tracks)
+    }
+
+    fun shuffleAll() {
+        val tracks = (uiState.value as? SongsUiState.Loaded)?.tracks ?: return
+        playerConnection.shuffleTracks(tracks)
+    }
+
     companion object {
         /** Manual DI: pulls dependencies from the App's container. */
         val Factory =

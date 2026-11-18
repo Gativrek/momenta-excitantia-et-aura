@@ -50,6 +50,8 @@ class MediaStoreSource(
         val mime = getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE)
         val dateAdded = getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_ADDED)
         val folder = getColumnIndexOrThrow(FOLDER_COLUMN)
+        // -1 when the column isn't in the projection (below API 30).
+        val albumArtist = ALBUM_ARTIST_COLUMN?.let { getColumnIndexOrThrow(it) } ?: -1
 
         val tracks = ArrayList<Track>(count)
         while (moveToNext()) {
@@ -72,6 +74,7 @@ class MediaStoreSource(
                     sizeBytes = getLong(size),
                     mimeType = getString(mime),
                     dateAddedSeconds = getLong(dateAdded),
+                    albumArtist = if (albumArtist >= 0) TrackFields.tagOrNull(getString(albumArtist)) else null,
                 )
         }
         return tracks
@@ -99,8 +102,12 @@ class MediaStoreSource(
                 TrackFields.folderFromDataPath(raw)
             }
 
+        /** ALBUM_ARTIST is only a documented column from API 30; skip it below. */
+        val ALBUM_ARTIST_COLUMN: String? =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) MediaStore.Audio.Media.ALBUM_ARTIST else null
+
         val PROJECTION =
-            arrayOf(
+            listOfNotNull(
                 MediaStore.Audio.Media._ID,
                 MediaStore.Audio.Media.TITLE,
                 MediaStore.Audio.Media.ARTIST,
@@ -115,6 +122,7 @@ class MediaStoreSource(
                 MediaStore.Audio.Media.MIME_TYPE,
                 MediaStore.Audio.Media.DATE_ADDED,
                 FOLDER_COLUMN,
-            )
+                ALBUM_ARTIST_COLUMN,
+            ).toTypedArray()
     }
 }

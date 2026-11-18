@@ -20,6 +20,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.gativrek.momenta.R
 import io.github.gativrek.momenta.data.library.Track
 import io.github.gativrek.momenta.ui.components.PlaceholderScreen
+import io.github.gativrek.momenta.ui.components.PlayShuffleButtons
 import io.github.gativrek.momenta.ui.components.TrackRow
 
 @Composable
@@ -35,6 +36,14 @@ fun SongsScreen(
             viewModel.play(track)
             onPlayStarted()
         },
+        onPlayAll = {
+            viewModel.playAll()
+            onPlayStarted()
+        },
+        onShuffle = {
+            viewModel.shuffleAll()
+            onPlayStarted()
+        },
         modifier = modifier,
     )
 }
@@ -44,6 +53,8 @@ fun SongsScreen(
 fun SongsContent(
     state: SongsUiState,
     onTrackClick: (Track) -> Unit,
+    onPlayAll: () -> Unit,
+    onShuffle: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     when (state) {
@@ -69,6 +80,9 @@ fun SongsContent(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp),
                         )
+                    }
+                    item(key = "actions", contentType = "actions") {
+                        PlayShuffleButtons(onPlayAll = onPlayAll, onShuffle = onShuffle)
                     }
                     // Stable keys (KICKOFF.md): rows keep their state and animate correctly
                     // when the library changes underneath them.

@@ -64,6 +64,21 @@ class LibraryRepository(
             .map { it.sortedWith(TrackFields.titleComparator()) }
             .flowOn(Dispatchers.Default)
 
+    /** Albums, alphabetical. Grouping runs off the main thread. */
+    val albums: Flow<List<Album>> = tracks.map { LibraryGrouping.albums(it) }.flowOn(Dispatchers.Default)
+
+    /** Artists, alphabetical, unknown last. */
+    val artists: Flow<List<Artist>> = tracks.map { LibraryGrouping.artists(it) }.flowOn(Dispatchers.Default)
+
+    /** One album, or null once it no longer exists (e.g. its files were deleted). */
+    fun album(id: Long): Flow<Album?> = albums.map { list -> list.firstOrNull { it.id == id } }
+
+    fun artist(id: Long): Flow<Artist?> = artists.map { list -> list.firstOrNull { it.id == id } }
+
+    /** One level of the folder tree; "" is the root. */
+    fun folder(path: String): Flow<FolderContents> =
+        tracks.map { LibraryGrouping.folderContents(it, path) }.flowOn(Dispatchers.Default)
+
     private suspend fun loadOrEmpty(): List<Track> =
         try {
             source.queryTracks()

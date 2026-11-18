@@ -32,10 +32,10 @@ Each phase ends in something runnable. A phase is done when its checkboxes are t
 - [ ] Verify: success criteria 1–8 (emulator run passed 1 [90 s under forced Doze], 2, 6, 7 and 8; still needs a real device for all of 1–8, especially 3, 4, 5 and real Bluetooth)
 
 ### Phase 3: Browse
-- [ ] Albums grid → album detail (in track order, disc-aware)
-- [ ] Artists list → artist detail (albums + songs)
-- [ ] Folders tree → folder contents
-- [ ] "Play all" / "Shuffle all" on every collection
+- [x] Albums grid → album detail (in track order, disc-aware)
+- [x] Artists list → artist detail (albums + songs)
+- [x] Folders tree → folder contents
+- [x] "Play all" / "Shuffle all" on every collection
 
 ### Phase 4: Queue & playback modes
 - [ ] Shuffle toggle, repeat off/all/one (Media3 player modes)

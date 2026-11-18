@@ -27,4 +27,6 @@ data class Track(
     val mimeType: String?,
     /** Seconds since the epoch, as MediaStore stores it. */
     val dateAddedSeconds: Long,
+    /** The ALBUM_ARTIST tag (API 30+ only), used to name compilations correctly. */
+    val albumArtist: String? = null,
 )

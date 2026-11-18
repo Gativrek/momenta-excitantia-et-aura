@@ -115,6 +115,14 @@ Single Gradle module (`:app`) for v1. Split into modules only if build times hur
 - Lists use `LazyColumn`/`LazyVerticalGrid` with stable `key = mediaId`.
 - Portrait-first. Don't spend time on landscape in v1. (Not orientation-locked: Android 16+ ignores locks on large screens and lint flags them.)
 - Navigation Compose with string routes for now. Bottom-bar tabs are the `TopLevelDestination` enum.
+- **As built (Phase 3):**
+  - Each tab is a nested graph (`navigation(route = tab, startDestination = "$tab/list")`), so a tab keeps its own back stack and re-selecting it restores where you were. Album detail is registered in both the Albums and Artists graphs (`"$tab/album/{albumId}"`), so opening an album from an artist stays inside the Artists tab.
+  - Albums, artists and folders are derived from the track list by `LibraryGrouping`: pure functions, unit-tested, recomputed off the main thread on each library change. Nothing is cached in a database.
+  - Album order: disc, then track number, then title (punctuation-skipping sort key). Album artist comes from the `ALBUM_ARTIST` tag (read only on API 30+, where the column exists), else the single track artist, else "Various artists".
+  - When an album has no track numbers at all (typically untagged files MediaStore groups by folder name), rows show their own cover instead of a number.
+  - Folders: one screen for every level, with the path as a URI-encoded nav argument (`""` = root). "Play all" / "Shuffle" in a folder include its subfolders.
+  - "Shuffle" plays a shuffled copy of the collection with the player's shuffle mode off. The shuffle toggle arrives in Phase 4.
+  - Detail top bars pass `windowInsets = WindowInsets(0)`: the root Scaffold already pads below the status bar.
 
 ### Graphics
 - **Line icons only** (stroke, no fill: 24×24, stroke width 2, round caps and joins). No emojis anywhere in the UI or resources.
