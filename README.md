@@ -4,7 +4,7 @@
 
 No streaming, no accounts, no network permission. It finds the music on your device and plays it reliably: in the background, with the screen off, over Bluetooth, and it gets out of the way when something else needs the speaker.
 
-> **Status:** in development toward v1.0. Playback, library, playlists and themes are done; tag editing and the real-device checklist are next.
+> **Status:** in development toward v1.0. Playback, library, playlists, themes and tag editing are done; the real-device checklist is next.
 
 ## Features (v1 target)
 
@@ -21,6 +21,7 @@ No streaming, no accounts, no network permission. It finds the music on your dev
 - **Sleep timer**
 - **Restores your queue and position** after the app is killed or the phone reboots
 - **Themes:** ten built-in looks, each with its own vector pattern, and every color, pattern, glow and corner style editable live. Text stays readable whatever colors you pick
+- **Tag editing:** fix a song's title, artist, album or album artist, or rename a whole album at once. Changes are written into the files (MP3, FLAC, M4A, OGG/Opus), so other apps and your PC see them too
 
 ## Tech stack
 
@@ -61,6 +62,7 @@ Release builds are signed from a local `keystore.properties` in the project root
 | `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK` | Keep playing in the background |
 | `POST_NOTIFICATIONS` (Android 13+) | Playback notification (optional; media controls still work without it) |
 | `WAKE_LOCK` | Keep playing with the screen off |
+| `WRITE_EXTERNAL_STORAGE` (Android 10 and below only) | Save tag edits into your files. On Android 11+ the system asks per edit instead |
 
 There is no `INTERNET` permission. The app never leaves your phone.
 

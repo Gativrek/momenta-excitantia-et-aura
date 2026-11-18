@@ -27,6 +27,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import io.github.gativrek.momenta.App
 import io.github.gativrek.momenta.MainActivity
 import io.github.gativrek.momenta.R
+import io.github.gativrek.momenta.data.library.Track
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -116,6 +117,7 @@ class PlaybackService : MediaSessionService() {
         )
 
         restoreQueue()
+        followLibrary()
     }
 
     /** Every controller (our UI, System UI, Bluetooth) gets the same session. */
@@ -145,6 +147,45 @@ class PlaybackService : MediaSessionService() {
         }
         mediaSession = null
         super.onDestroy()
+    }
+
+    /**
+     * Keeps the queue in step with the library: when a file's tags change (edited in the
+     * app or anywhere else), the queue, notification and car display show the new ones.
+     */
+    private fun followLibrary() {
+        scope.launch {
+            container.libraryRepository.tracks.collect { tracks -> refreshQueue(tracks.associateBy { it.id }) }
+        }
+    }
+
+    private fun refreshQueue(library: Map<Long, Track>) {
+        val exo = player.exoPlayer
+        val count = exo.mediaItemCount
+        if (count == 0) return
+        val updates =
+            (0 until count)
+                .mapNotNull { i ->
+                    val old = exo.getMediaItemAt(i)
+                    val track = MediaItemMapper.trackId(old)?.let(library::get) ?: return@mapNotNull null
+                    val fresh = MediaItemMapper.toMediaItem(track)
+                    if (MediaItemMapper.isOutdated(old, fresh)) i to fresh else null
+                }.toMap()
+        if (updates.isEmpty()) return
+        val current = exo.currentMediaItemIndex
+        val currentUpdate = updates[current]
+        if (currentUpdate != null && MediaItemMapper.fileChanged(exo.getMediaItemAt(current), currentUpdate)) {
+            // The playing file was rewritten and its audio moved: reload the queue at the same
+            // spot. Straight to ExoPlayer (QueuePlayer would redraw the shuffle), then put the
+            // play order back. A prepared player stays prepared, and play/pause is kept.
+            val order = PlayOrder.of(exo.currentTimeline, true)
+            val position = exo.currentPosition
+            exo.setMediaItems((0 until count).map { updates[it] ?: exo.getMediaItemAt(it) }, current, position)
+            player.setPlayOrder(order)
+        } else {
+            // Same audio, new tags: swapped in place without interrupting playback.
+            updates.forEach { (i, item) -> exo.replaceMediaItem(i, item) }
+        }
     }
 
     // region Saving and restoring the queue (survives force-stop and reboot)

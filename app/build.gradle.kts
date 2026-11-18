@@ -115,6 +115,8 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.session)
+    // TagLib (native) for writing tags: MP3, FLAC, M4A, OGG Vorbis and Opus, through a file descriptor.
+    implementation(libs.taglib)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)

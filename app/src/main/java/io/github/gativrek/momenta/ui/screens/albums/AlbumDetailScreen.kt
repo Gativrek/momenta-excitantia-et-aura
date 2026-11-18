@@ -43,6 +43,7 @@ import io.github.gativrek.momenta.ui.format.formatDuration
 import io.github.gativrek.momenta.ui.screens.AlbumDetailViewModel
 import io.github.gativrek.momenta.ui.screens.LibraryViewModels
 import io.github.gativrek.momenta.ui.screens.playlists.AddToPlaylistDialog
+import io.github.gativrek.momenta.ui.screens.tags.EditAlbumTagsDialog
 
 @Composable
 fun AlbumDetailScreen(
@@ -89,6 +90,7 @@ fun AlbumDetailContent(
     modifier: Modifier = Modifier,
 ) {
     var addingToPlaylist by rememberSaveable { mutableStateOf(false) }
+    var editingTags by rememberSaveable { mutableStateOf(false) }
     Column(modifier.fillMaxSize()) {
         DetailTopBar(
             title = album.title ?: stringResource(R.string.unknown_album),
@@ -98,6 +100,12 @@ fun AlbumDetailContent(
                     Icon(
                         painterResource(R.drawable.ic_playlist_add),
                         contentDescription = stringResource(R.string.action_add_to_playlist),
+                    )
+                }
+                IconButton(onClick = { editingTags = true }) {
+                    Icon(
+                        painterResource(R.drawable.ic_edit),
+                        contentDescription = stringResource(R.string.tags_edit_album),
                     )
                 }
             },
@@ -130,6 +138,9 @@ fun AlbumDetailContent(
     }
     if (addingToPlaylist) {
         AddToPlaylistDialog(trackIds = album.tracks.map { it.id }, onDismiss = { addingToPlaylist = false })
+    }
+    if (editingTags) {
+        EditAlbumTagsDialog(album = album, onDismiss = { editingTags = false })
     }
 }
 

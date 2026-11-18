@@ -8,6 +8,7 @@ import io.github.gativrek.momenta.data.library.MediaStoreSource
 import io.github.gativrek.momenta.data.playlists.MomentaDatabase
 import io.github.gativrek.momenta.data.playlists.PlaylistRepository
 import io.github.gativrek.momenta.data.settings.AppearanceStore
+import io.github.gativrek.momenta.data.tags.TagWriter
 import io.github.gativrek.momenta.playback.PlaybackStateStore
 import io.github.gativrek.momenta.playback.PlayerConnection
 import kotlinx.coroutines.CoroutineScope
@@ -57,6 +58,9 @@ class AppContainer(
     val playlistRepository: PlaylistRepository by lazy {
         PlaylistRepository(database.playlistDao(), libraryRepository, applicationScope)
     }
+
+    /** Writes tags into music files (and repairs an interrupted write at startup). */
+    val tagWriter: TagWriter by lazy { TagWriter(appContext) }
 
     /** The user's theme. Created on first use, which is the first frame: MainActivity reads it at once. */
     val appearanceStore: AppearanceStore by lazy {

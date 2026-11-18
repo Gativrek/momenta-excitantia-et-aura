@@ -21,6 +21,7 @@ import androidx.compose.ui.res.stringResource
 import io.github.gativrek.momenta.R
 import io.github.gativrek.momenta.data.library.Track
 import io.github.gativrek.momenta.ui.screens.playlists.AddToPlaylistDialog
+import io.github.gativrek.momenta.ui.screens.tags.EditTrackTagsDialog
 
 /** The per-track queue actions every track list offers. */
 class QueueActions(
@@ -28,7 +29,7 @@ class QueueActions(
     val addToQueue: (Track) -> Unit,
 )
 
-/** Three-dot button with "Play next", "Add to queue" and "Add to playlist". */
+/** Three-dot button with "Play next", "Add to queue", "Add to playlist" and "Edit tags". */
 @Composable
 fun TrackMenuButton(
     track: Track,
@@ -36,6 +37,7 @@ fun TrackMenuButton(
 ) {
     var open by remember { mutableStateOf(false) }
     var addingToPlaylist by remember { mutableStateOf(false) }
+    var editingTags by remember { mutableStateOf(false) }
     val context = LocalContext.current
     Box {
         IconButton(onClick = { open = true }) {
@@ -60,10 +62,17 @@ fun TrackMenuButton(
                 open = false
                 addingToPlaylist = true
             }
+            MenuItem(R.string.action_edit_tags, R.drawable.ic_edit) {
+                open = false
+                editingTags = true
+            }
         }
     }
     if (addingToPlaylist) {
         AddToPlaylistDialog(trackIds = listOf(track.id), onDismiss = { addingToPlaylist = false })
+    }
+    if (editingTags) {
+        EditTrackTagsDialog(track = track, onDismiss = { editingTags = false })
     }
 }
 

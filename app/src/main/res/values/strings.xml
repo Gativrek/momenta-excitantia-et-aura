@@ -104,6 +104,32 @@
         <item quantity="other">%d songs can\'t be found</item>
     </plurals>
 
+    <!-- Tag editing -->
+    <string name="action_edit_tags">Edit tags</string>
+    <string name="action_save">Save</string>
+    <string name="tags_edit_song">Edit song</string>
+    <string name="tags_edit_album">Edit album</string>
+    <string name="tag_title">Title</string>
+    <string name="tag_artist">Artist</string>
+    <string name="tag_artist_all">Artist (every song)</string>
+    <string name="tag_album">Album</string>
+    <string name="tag_album_artist">Album artist</string>
+    <string name="tags_mixed_placeholder">Mixed</string>
+    <string name="tags_mixed_hint">Left empty, each song keeps its own.</string>
+    <string name="tags_written_to_files">Changes are saved into the music files themselves.</string>
+    <string name="tags_writing">Saving tags…</string>
+    <!-- %1$d songs written out of %2$d. -->
+    <string name="tags_progress">%1$d of %2$d</string>
+    <string name="tags_access_declined">Nothing was changed: the files can\'t be edited without access.</string>
+    <plurals name="tags_saved">
+        <item quantity="one">Saved tags for %d song</item>
+        <item quantity="other">Saved tags for %d songs</item>
+    </plurals>
+    <plurals name="tags_failed">
+        <item quantity="one">%d song couldn\'t be saved and was left as it was</item>
+        <item quantity="other">%d songs couldn\'t be saved and were left as they were</item>
+    </plurals>
+
     <!-- Playback errors. %s is the track title. -->
     <string name="unknown_track">Unknown track</string>
     <string name="error_track_missing">Skipped \"%s\": the file is gone.</string>

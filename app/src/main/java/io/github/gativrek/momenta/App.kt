@@ -6,6 +6,7 @@ import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import io.github.gativrek.momenta.data.library.ArtworkFetcher
 import io.github.gativrek.momenta.data.library.ArtworkKeyer
+import kotlinx.coroutines.launch
 
 /**
  * Application entry point. Owns the [AppContainer], so every long-lived object
@@ -23,6 +24,8 @@ class App :
     override fun onCreate() {
         super.onCreate()
         container = AppContainer(this)
+        // A tag write interrupted by a crash or power cut left a file half-written: put it back.
+        container.applicationScope.launch { container.tagWriter.recover() }
     }
 
     override fun newImageLoader(context: PlatformContext): ImageLoader =

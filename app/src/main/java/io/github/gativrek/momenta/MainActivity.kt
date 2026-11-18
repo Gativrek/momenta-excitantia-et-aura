@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.gativrek.momenta.ui.MomentaApp
 import io.github.gativrek.momenta.ui.screens.permission.PermissionGate
+import io.github.gativrek.momenta.ui.screens.tags.TagEditorHost
 import io.github.gativrek.momenta.ui.theme.MomentaTheme
 import io.github.gativrek.momenta.ui.theme.ThemeBackdrop
 import io.github.gativrek.momenta.ui.theme.isDarkBackground
@@ -49,7 +50,9 @@ class MainActivity : ComponentActivity() {
                     ThemeBackdrop(spec, Modifier.fillMaxSize())
                     // Every tab reads the music library, so the whole app sits behind the permission.
                     PermissionGate {
-                        MomentaApp()
+                        TagEditorHost {
+                            MomentaApp()
+                        }
                     }
                 }
             }
