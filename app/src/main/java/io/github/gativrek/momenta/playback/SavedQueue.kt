@@ -11,7 +11,7 @@ import androidx.media3.common.Player
 import kotlinx.coroutines.flow.first
 
 /**
- * Everything needed to put the player back the way it was (criterion 9). Track IDs are
+ * Everything needed to put the player back the way it was after a force-stop or reboot. Track IDs are
  * MediaStore IDs in item order; [playOrder] is only meaningful when [shuffle] is on.
  */
 data class SavedQueue(

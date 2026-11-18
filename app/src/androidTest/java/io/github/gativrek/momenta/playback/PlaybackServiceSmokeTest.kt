@@ -12,7 +12,7 @@ import org.junit.runner.RunWith
 import java.util.concurrent.TimeUnit
 
 /**
- * Smoke test (KICKOFF.md "Testing"): the service starts and a MediaController connects,
+ * Smoke test: the service starts and a MediaController connects,
  * the same path Bluetooth and System UI take. Run with `./gradlew connectedDebugAndroidTest`
  * on an emulator or device; CI doesn't run it (no emulator there).
  */

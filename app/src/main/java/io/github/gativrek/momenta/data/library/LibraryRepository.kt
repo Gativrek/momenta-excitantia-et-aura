@@ -24,7 +24,7 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.shareIn
 
 /**
- * The music library as a live stream. MediaStore is the source of truth (KICKOFF.md):
+ * The music library as a live stream. MediaStore is the source of truth:
  * nothing is cached on disk, we re-query whenever MediaStore says something changed.
  */
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)

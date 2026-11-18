@@ -38,7 +38,7 @@ import kotlinx.coroutines.launch
 import kotlin.random.Random
 
 /**
- * Owns the one ExoPlayer and its MediaSession (KICKOFF.md: "the service owns the player").
+ * Owns the one ExoPlayer and its MediaSession. The service owns the player, never an Activity or ViewModel.
  *
  * Everything that controls playback, our own UI included, goes through the session:
  * the notification, lock screen, Bluetooth buttons and car displays all use the same path.
@@ -76,10 +76,10 @@ class PlaybackService : MediaSessionService() {
                         .build(),
                     // handleAudioFocus = true: ExoPlayer requests focus, pauses for calls and
                     // other media, ducks for navigation prompts and resumes when appropriate.
-                    // No hand-written OnAudioFocusChangeListener anywhere (KICKOFF.md rule 5).
+                    // No hand-written OnAudioFocusChangeListener anywhere.
                     true,
                 )
-                // Pause when headphones are unplugged or Bluetooth audio disconnects (criterion 5).
+                // Pause when headphones are unplugged or Bluetooth audio disconnects.
                 .setHandleAudioBecomingNoisy(true)
                 // Hold a partial wake lock while playing so the CPU keeps decoding with the screen off.
                 .setWakeMode(C.WAKE_MODE_LOCAL)
@@ -122,7 +122,7 @@ class PlaybackService : MediaSessionService() {
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = mediaSession
 
     /**
-     * The user swiped the app away from Recents (criterion 8). Keep playing if music is
+     * The user swiped the app away from Recents. Keep playing if music is
      * playing; otherwise there's nothing to keep the service for, so stop it.
      */
     override fun onTaskRemoved(rootIntent: Intent?) {
@@ -147,7 +147,7 @@ class PlaybackService : MediaSessionService() {
         super.onDestroy()
     }
 
-    // region Saving and restoring the queue (criterion 9)
+    // region Saving and restoring the queue (survives force-stop and reboot)
 
     /**
      * Put back the last queue, paused (never auto-play on launch). The player isn't

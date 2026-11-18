@@ -87,7 +87,7 @@ fun SongsContent(
                     item(key = "actions", contentType = "actions") {
                         PlayShuffleButtons(onPlayAll = onPlayAll, onShuffle = onShuffle)
                     }
-                    // Stable keys (KICKOFF.md): rows keep their state and animate correctly
+                    // Stable keys: rows keep their state and animate correctly
                     // when the library changes underneath them.
                     items(state.tracks, key = { it.id }, contentType = { "track" }) { track ->
                         TrackRow(track = track, onClick = { onTrackClick(track) }, queueActions = queueActions)

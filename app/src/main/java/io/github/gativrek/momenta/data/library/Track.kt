@@ -5,7 +5,7 @@ package io.github.gativrek.momenta.data.library
  * matching logic can be unit-tested on the JVM. Get its playable URI with [Track.contentUri].
  */
 data class Track(
-    /** MediaStore `_ID`. Not stable forever: see KICKOFF.md "Playlists". */
+    /** MediaStore `_ID`. Not stable forever: it can change after a rescan or remount (see TrackMatcher). */
     val id: Long,
     val title: String,
     /** Null when the file has no artist tag (MediaStore reports "<unknown>"). */

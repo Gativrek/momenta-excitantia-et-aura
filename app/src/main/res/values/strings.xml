@@ -171,7 +171,7 @@
     <string name="pattern_domain">Domain</string>
     <string name="pattern_none">None</string>
 
-    <!-- Built-in theme names. Each is named after the music that inspired it (design/THEMES.md). -->
+    <!-- Built-in theme names. Each is named after the music that inspired it (see ThemePreset). -->
     <string name="preset_ragnarok">Ragnarok</string>
     <string name="preset_justice">Justice</string>
     <string name="preset_hangar">Hangar</string>

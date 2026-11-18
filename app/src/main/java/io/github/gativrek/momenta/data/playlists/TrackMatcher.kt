@@ -5,7 +5,7 @@ import kotlin.math.abs
 
 /**
  * Finds the file a playlist entry points at, even after MediaStore handed out new IDs
- * (criterion 14). Resolution order, from KICKOFF.md:
+ * (files added over USB, a rescan, a remount). Resolution order:
  *
  * 1. ID matches and the file name matches: the same file.
  * 2. Folder + file name match: re-scanned, new ID. Re-link.

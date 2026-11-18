@@ -11,7 +11,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * The sleep timer (criterion 11). Lives in the service, not a ViewModel, so it keeps
+ * The sleep timer. Lives in the service, not a ViewModel, so it keeps
  * running with the UI gone. [onChange] publishes the state to controllers.
  *
  * "Finish current track": when time is up, ExoPlayer's pauseAtEndOfMediaItems pauses

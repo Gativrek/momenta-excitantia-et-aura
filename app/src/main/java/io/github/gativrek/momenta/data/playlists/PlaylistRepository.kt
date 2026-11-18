@@ -42,7 +42,7 @@ data class PlaylistDetail(
  * Playlists, resolved against the live library. Entries are matched to files on every
  * library change ([TrackMatcher]); when a match needed re-linking (new MediaStore ID, moved
  * file) the new fingerprint is written back. Entries that can't be found stay in the
- * playlist, marked missing, and come back by themselves if the file returns (criterion 14).
+ * playlist, marked missing, and come back by themselves if the file returns.
  */
 class PlaylistRepository(
     private val dao: PlaylistDao,

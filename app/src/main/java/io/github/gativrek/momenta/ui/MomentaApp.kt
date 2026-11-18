@@ -146,7 +146,7 @@ private fun BottomBar(
     NavigationBar {
         TopLevelDestination.entries.forEach { destination ->
             // hierarchy also matches nested detail screens, so "Albums" stays
-            // highlighted while viewing an album (Phase 3).
+            // highlighted while viewing an album.
             val selected = currentDestination?.hierarchy?.any { it.route == destination.route } == true
             NavigationBarItem(
                 selected = selected,

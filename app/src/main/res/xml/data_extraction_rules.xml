@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     Android 12+ backup rules. Nothing goes to cloud backup (the app's data never leaves the
-    phone, see GOALS.md). Direct device-to-device transfer is allowed, so playlists and
+    phone). Direct device-to-device transfer is allowed, so playlists and
     settings follow you to a new phone.
 -->
 <data-extraction-rules>

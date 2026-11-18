@@ -14,7 +14,7 @@ import io.github.gativrek.momenta.data.library.contentUri
 object MediaItemMapper {
     private const val EXTRA_ALBUM_ID = "io.github.gativrek.momenta.ALBUM_ID"
 
-    /** mediaId = MediaStore `_ID` (KICKOFF.md). The URI is set too, for in-process use. */
+    /** mediaId = MediaStore `_ID`, the one ID every layer shares. The URI is set too, for in-process use. */
     fun toMediaItem(track: Track): MediaItem =
         MediaItem
             .Builder()
@@ -24,7 +24,7 @@ object MediaItemMapper {
             .build()
 
     /**
-     * Title, artist and album are what AVRCP and car displays read (success criterion 7).
+     * Title, artist and album are what AVRCP and car displays read.
      * No artwork URI: ExoPlayer extracts the cover embedded in the file while playing and
      * hands it to the notification, which is exactly the per-track art we want.
      */

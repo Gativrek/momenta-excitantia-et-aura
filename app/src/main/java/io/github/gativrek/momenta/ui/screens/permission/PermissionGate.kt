@@ -39,7 +39,7 @@ import io.github.gativrek.momenta.ui.theme.MomentaTheme
 
 /**
  * Shows [content] only once the audio permission is granted; otherwise an explanation
- * screen with a way to grant it (success criterion 13).
+ * screen with a way to grant it, never a crash.
  */
 @Composable
 fun PermissionGate(content: @Composable () -> Unit) {

@@ -38,7 +38,7 @@ data class Artwork(
 fun artworkModel(track: Track): Artwork = Artwork(trackId = track.id, albumId = track.albumId)
 
 /**
- * Loads [Artwork] the right way for each Android version (KICKOFF.md "Album art"):
+ * Loads [Artwork] the right way for each Android version:
  * - API 29+: `ContentResolver.loadThumbnail` on the track URI. MediaStore extracts the
  *   embedded cover and caches a scaled thumbnail for us.
  * - API 26–28: the legacy `content://media/external/audio/albumart/{albumId}` URI.

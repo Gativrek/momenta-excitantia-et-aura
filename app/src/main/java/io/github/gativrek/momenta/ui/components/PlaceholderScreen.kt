@@ -16,7 +16,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
-/** Centered icon + title + subtitle. Used for the Phase 0 tabs, and later for empty states. */
+/** Centered icon + title + subtitle, for empty states and hints. */
 @Composable
 fun PlaceholderScreen(
     @DrawableRes iconRes: Int,

@@ -18,7 +18,7 @@ data class PlaylistEntity(
  * One song in a playlist. The same song may appear more than once, so an entry has its
  * own ID. [position] is the explicit order (0-based, no gaps).
  *
- * The MediaStore ID alone isn't enough to find the file again (KICKOFF.md: IDs change after
+ * The MediaStore ID alone isn't enough to find the file again (IDs change after
  * a rescan or remount), so the entry keeps a fingerprint of the file: folder, file name,
  * duration and size. [title] and [artist] are only for showing a missing entry.
  */

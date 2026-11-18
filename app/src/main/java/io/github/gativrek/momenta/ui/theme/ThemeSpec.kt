@@ -114,7 +114,7 @@ fun parseHexOrNull(text: String): Color? = runCatching { parseHex(text) }.getOrN
 
 /**
  * The built-in themes. Each one is drawn from a piece of music the app was made for; the
- * reasoning behind every color and pattern is in design/THEMES.md.
+ * doc comment on each one says which, and why it looks the way it does.
  */
 enum class ThemePreset(
     @param:StringRes val labelRes: Int,

@@ -13,7 +13,7 @@ plugins {
 /**
  * Release signing, read from `keystore.properties` in the project root (gitignored) or from
  * environment variables of the same names, so no secret is ever committed. Without them the
- * release APK is built unsigned. See KICKOFF.md "Releasing".
+ * release APK is built unsigned.
  */
 val signingProps =
     Properties().apply {
@@ -75,7 +75,7 @@ android {
     }
 
     lint {
-        // "No new warnings" (KICKOFF.md): any lint warning fails the build.
+        // No new warnings, ever: any lint warning fails the build.
         warningsAsErrors = true
         abortOnError = true
         // Version-bump nags depend on what the machine's SDK knows about (CI's is newer than
