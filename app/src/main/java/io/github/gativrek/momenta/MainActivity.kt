@@ -9,6 +9,8 @@ import io.github.gativrek.momenta.ui.screens.permission.PermissionGate
 import io.github.gativrek.momenta.ui.theme.MomentaTheme
 
 class MainActivity : ComponentActivity() {
+    private val playerConnection by lazy { (application as App).container.playerConnection }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // Draw behind the status and navigation bars; Scaffold hands us the insets as padding.
         // (Target SDK 35+ enforces edge-to-edge anyway, this makes older versions match.)
@@ -22,5 +24,17 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    // Bind to the playback service only while visible (see PlayerConnection). Playback itself
+    // keeps going after onStop: the service, not the Activity, owns the player.
+    override fun onStart() {
+        super.onStart()
+        playerConnection.connect()
+    }
+
+    override fun onStop() {
+        playerConnection.disconnect()
+        super.onStop()
     }
 }

@@ -24,14 +24,17 @@ import io.github.gativrek.momenta.ui.components.TrackRow
 
 @Composable
 fun SongsScreen(
+    onPlayStarted: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SongsViewModel = viewModel(factory = SongsViewModel.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     SongsContent(
         state = state,
-        // Playback arrives in Phase 2; rows are already clickable so the wiring is one line.
-        onTrackClick = {},
+        onTrackClick = { track ->
+            viewModel.play(track)
+            onPlayStarted()
+        },
         modifier = modifier,
     )
 }

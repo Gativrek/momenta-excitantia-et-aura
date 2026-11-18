@@ -26,6 +26,13 @@
         <item quantity="one">%d song</item>
         <item quantity="other">%d songs</item>
     </plurals>
+    <!-- Player -->
+    <string name="action_play">Play</string>
+    <string name="action_pause">Pause</string>
+    <string name="action_next">Next track</string>
+    <string name="action_previous">Previous track</string>
+    <string name="action_collapse">Close player</string>
+
     <string name="songs_empty_title">No music found</string>
     <string name="songs_empty_body">Copy audio files to this phone, for example into the Music folder, and they\'ll appear here.</string>
 </resources>

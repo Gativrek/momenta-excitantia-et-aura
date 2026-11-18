@@ -16,16 +16,25 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import coil3.compose.AsyncImage
 import io.github.gativrek.momenta.R
+import io.github.gativrek.momenta.data.library.Artwork
 import io.github.gativrek.momenta.data.library.Track
 import io.github.gativrek.momenta.data.library.artworkModel
 
-/**
- * A track's cover art in a rounded square. The line-icon note underneath shows while
- * loading and stays visible when the file has no art (the image simply never draws over it).
- */
+/** Cover art for a library track. */
 @Composable
 fun ArtworkImage(
     track: Track,
+    size: Dp,
+    modifier: Modifier = Modifier,
+) = ArtworkImage(artwork = artworkModel(track), size = size, modifier = modifier)
+
+/**
+ * Cover art in a rounded square. The line-icon note underneath shows while loading and
+ * stays visible when there is no art (the image simply never draws over it).
+ */
+@Composable
+fun ArtworkImage(
+    artwork: Artwork?,
     size: Dp,
     modifier: Modifier = Modifier,
 ) {
@@ -43,11 +52,13 @@ fun ArtworkImage(
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(size / 2),
         )
-        AsyncImage(
-            model = artworkModel(track),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize(),
-        )
+        if (artwork != null) {
+            AsyncImage(
+                model = artwork,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
     }
 }

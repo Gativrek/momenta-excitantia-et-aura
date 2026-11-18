@@ -21,15 +21,15 @@ Each phase ends in something runnable. A phase is done when its checkboxes are t
 - [x] Songs list screen (flat, sorted by title)
 
 ### Phase 2: Playback core
-- [ ] `PlaybackService : MediaSessionService` holding one ExoPlayer
-- [ ] Foreground service type `mediaPlayback` declared in the manifest
-- [ ] Audio attributes `USAGE_MEDIA` / `CONTENT_TYPE_MUSIC`, with `handleAudioFocus = true`
-- [ ] `setHandleAudioBecomingNoisy(true)`, wake mode `C.WAKE_MODE_LOCAL`
-- [ ] Media notification + lock-screen controls (Media3 default notification provider)
-- [ ] UI connects through `MediaController` (`SessionToken`)
-- [ ] Tap a song to play it, with the rest of the list as the queue
-- [ ] Mini-player bar + full Now Playing screen (art, title/artist, seek bar, play/pause/next/prev)
-- [ ] Verify: success criteria 1–8
+- [x] `PlaybackService : MediaSessionService` holding one ExoPlayer
+- [x] Foreground service type `mediaPlayback` declared in the manifest
+- [x] Audio attributes `USAGE_MEDIA` / `CONTENT_TYPE_MUSIC`, with `handleAudioFocus = true`
+- [x] `setHandleAudioBecomingNoisy(true)`, wake mode `C.WAKE_MODE_LOCAL`
+- [x] Media notification + lock-screen controls (Media3 default notification provider)
+- [x] UI connects through `MediaController` (`SessionToken`)
+- [x] Tap a song to play it, with the rest of the list as the queue
+- [x] Mini-player bar + full Now Playing screen (art, title/artist, seek bar, play/pause/next/prev)
+- [ ] Verify: success criteria 1–8 (emulator run passed 1 [90 s under forced Doze], 2, 6, 7 and 8; still needs a real device for all of 1–8, especially 3, 4, 5 and real Bluetooth)
 
 ### Phase 3: Browse
 - [ ] Albums grid → album detail (in track order, disc-aware)

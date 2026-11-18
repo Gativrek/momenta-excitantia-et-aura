@@ -3,6 +3,7 @@ package io.github.gativrek.momenta
 import android.content.Context
 import io.github.gativrek.momenta.data.library.LibraryRepository
 import io.github.gativrek.momenta.data.library.MediaStoreSource
+import io.github.gativrek.momenta.playback.PlayerConnection
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 
@@ -31,4 +32,7 @@ class AppContainer(
             scope = applicationScope,
         )
     }
+
+    /** Connected/disconnected by MainActivity's onStart/onStop. */
+    val playerConnection: PlayerConnection by lazy { PlayerConnection(appContext) }
 }

@@ -95,6 +95,13 @@ Single Gradle module (`:app`) for v1. Split into modules only if build times hur
 - **Sleep timer:** lives in the service, not a ViewModel, so it survives the UI dying. "Finish current track" = when time is up, set a flag and pause on the next `onMediaItemTransition`.
 - **State persistence:** save the queue (media IDs), current index, position, shuffle and repeat to DataStore on pause, on track change and every ~10 s while playing. Restore **paused** on startup. Never auto-play on launch.
 - `POST_NOTIFICATIONS` on 13+: request it, but playback must still work if it's denied.
+- **As built (Phase 2):**
+  - **No artwork URI in `MediaMetadata`** (deviation from "Media IDs" above). MediaStore has no per-track art URI, and the per-album one is wrong for untagged files (see Library). ExoPlayer extracts the embedded cover while playing, and the notification, lock screen and Bluetooth get it from there. The album ID rides in the metadata extras so the in-app UI can build its own `Artwork` model.
+  - `PlaybackService.onAddMediaItems` rebuilds the content URI from `mediaId` when an item arrives without one, because Media3 strips URIs from items crossing processes (System UI, Bluetooth).
+  - `PlayerConnection` lives in `AppContainer`, connects in `MainActivity.onStart` and releases in `onStop`. Commands sent before the connection is ready are queued. The position is a separate polled flow, so only seek bars tick.
+  - The notification permission is requested on the first play (contextual), at most once per screen session.
+  - Notification small icon: `ic_notification`, generated from `design/icons/notification.svg`.
+  - Instrumented smoke test: `./gradlew connectedDebugAndroidTest` (emulator or device; not in CI).
 
 ### Playlists (Room)
 - **MediaStore IDs are not stable forever.** They can change after a rescan, SD card remount or reinstall of files. Store a fingerprint with each entry:

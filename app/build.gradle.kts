@@ -17,6 +17,8 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "0.0.1"
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -30,6 +32,12 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    testOptions {
+        // JVM unit tests run against android.jar stubs. Return defaults instead of throwing so
+        // pure mapping code that touches Media3/Bundle classes can still be tested without Robolectric.
+        unitTests.isReturnDefaultValues = true
     }
 
     buildFeatures {
@@ -69,7 +77,11 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     // Coil core only: deliberately no coil-network-* module, the app never fetches over the network.
     implementation(libs.coil.compose)
+    implementation(libs.media3.exoplayer)
+    implementation(libs.media3.session)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.ext.junit)
 }
