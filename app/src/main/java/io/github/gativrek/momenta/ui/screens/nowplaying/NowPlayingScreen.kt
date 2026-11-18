@@ -1,5 +1,6 @@
 package io.github.gativrek.momenta.ui.screens.nowplaying
 
+import android.os.SystemClock
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -31,6 +32,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -54,7 +56,6 @@ import io.github.gativrek.momenta.data.moments.MomentEntity
 import io.github.gativrek.momenta.data.moments.MomentSuggestion
 import io.github.gativrek.momenta.data.settings.MomentsSettings
 import io.github.gativrek.momenta.playback.PlayerUiState
-import io.github.gativrek.momenta.ui.components.ArtworkImage
 import io.github.gativrek.momenta.ui.components.PlayPauseButton
 import io.github.gativrek.momenta.ui.components.SkipButton
 import io.github.gativrek.momenta.ui.format.formatDuration
@@ -113,6 +114,7 @@ fun NowPlayingScreen(
         onCollapse = onCollapse,
         onTogglePlayPause = viewModel::togglePlayPause,
         onPrevious = viewModel::previous,
+        onPreviousTrack = viewModel::previousTrack,
         onNext = viewModel::next,
         onSeek = viewModel::seekTo,
         onToggleShuffle = viewModel::toggleShuffle,
@@ -169,6 +171,7 @@ fun NowPlayingContent(
     onCollapse: () -> Unit,
     onTogglePlayPause: () -> Unit,
     onPrevious: () -> Unit,
+    onPreviousTrack: () -> Unit,
     onNext: () -> Unit,
     onSeek: (Long) -> Unit,
     onToggleShuffle: () -> Unit,
@@ -183,6 +186,9 @@ fun NowPlayingContent(
     modifier: Modifier = Modifier,
 ) {
     val nowPlaying = state.nowPlaying
+
+    // When the user last went back: the cover slides backwards for a song change right after.
+    var backAt by remember { mutableLongStateOf(0L) }
     val spark = MaterialTheme.colorScheme.tertiary
 
     // 0 → 1 as a Moment starts, back to 0 as it ends; every reaction follows this one value.
@@ -242,7 +248,18 @@ fun NowPlayingContent(
                             scaleY = scale
                         },
                     ) {
-                        ArtworkImage(artwork = nowPlaying?.artwork, size = coverSize)
+                        SwipeCover(
+                            nowPlaying = nowPlaying,
+                            size = coverSize,
+                            hasNext = state.hasNext,
+                            hasPrevious = state.hasPreviousTrack,
+                            backAt = { backAt },
+                            onSwipeNext = onNext,
+                            onSwipePrevious = {
+                                backAt = SystemClock.uptimeMillis()
+                                onPreviousTrack()
+                            },
+                        )
                     }
                     // The notes float over the bottom of the cover, so they never push the controls off a
                     // short screen.
@@ -335,7 +352,10 @@ fun NowPlayingContent(
                     SkipButton(
                         next = false,
                         enabled = state.hasPrevious,
-                        onClick = onPrevious,
+                        onClick = {
+                            backAt = SystemClock.uptimeMillis()
+                            onPrevious()
+                        },
                         modifier = Modifier.size(64.dp),
                         iconSize = 32.dp,
                     )

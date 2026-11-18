@@ -45,6 +45,8 @@ data class PlayerUiState(
     val playWhenReady: Boolean = false,
     val durationMs: Long = 0,
     val hasPrevious: Boolean = false,
+    /** There's a song before this one (hasPrevious also counts restarting this one). */
+    val hasPreviousTrack: Boolean = false,
     val hasNext: Boolean = false,
     val shuffle: Boolean = false,
     val repeatMode: Int = Player.REPEAT_MODE_OFF,
@@ -204,6 +206,9 @@ class PlayerConnection(
     /** Standard "previous": restarts the track if a few seconds in, otherwise goes back one. */
     fun previous() = withController { it.seekToPrevious() }
 
+    /** Back one song, however far into this one (swiping the cover). */
+    fun previousTrack() = withController { if (it.hasPreviousMediaItem()) it.seekToPreviousMediaItem() }
+
     fun seekTo(positionMs: Long) = withController { it.seekTo(positionMs) }
 
     fun toggleShuffle() = withController { it.shuffleModeEnabled = !it.shuffleModeEnabled }
@@ -325,6 +330,7 @@ class PlayerConnection(
                 playWhenReady = player.playWhenReady,
                 durationMs = player.duration.takeIf { it > 0 } ?: item?.mediaMetadata?.durationMs ?: 0L,
                 hasPrevious = player.hasPreviousMediaItem() || player.currentPosition > 0,
+                hasPreviousTrack = player.hasPreviousMediaItem(),
                 hasNext = player.hasNextMediaItem(),
                 shuffle = player.shuffleModeEnabled,
                 repeatMode = player.repeatMode,

@@ -81,6 +81,8 @@ class PlayerViewModel(
 
     fun previous() = connection.previous()
 
+    fun previousTrack() = connection.previousTrack()
+
     fun seekTo(positionMs: Long) = connection.seekTo(positionMs)
 
     fun toggleShuffle() = connection.toggleShuffle()
