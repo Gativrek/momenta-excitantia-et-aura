@@ -38,12 +38,12 @@ Each phase ends in something runnable. A phase is done when its checkboxes are t
 - [x] "Play all" / "Shuffle all" on every collection
 
 ### Phase 4: Queue & playback modes
-- [ ] Shuffle toggle, repeat off/all/one (Media3 player modes)
-- [ ] Queue screen: reorder by drag, swipe to remove, tap to jump
-- [ ] "Play next" / "Add to queue" from any track
-- [ ] Gapless playback verified (criterion 10)
-- [ ] Sleep timer: presets plus custom, with an option to finish the current track (criterion 11)
-- [ ] Persist queue, index, position, shuffle and repeat to DataStore; restore paused on launch (criterion 9)
+- [x] Shuffle toggle, repeat off/all/one (Media3 player modes)
+- [x] Queue screen: reorder by drag, swipe to remove, tap to jump
+- [x] "Play next" / "Add to queue" from any track
+- [ ] Gapless playback verified (criterion 10) (ExoPlayer default, nothing added that could break it; needs a listen on a real device with a gapless album, none in the test set)
+- [x] Sleep timer: presets plus custom, with an option to finish the current track (criterion 11; emulator: 1 min timer paused at the end of the track)
+- [x] Persist queue, index, position, shuffle and repeat to DataStore; restore paused on launch (criterion 9; emulator: force-stop while playing, reopened paused on the same track, position and shuffled order)
 
 ### Phase 5: Playlists
 - [ ] Room schema: `Playlist`, `PlaylistEntry` (ordered), with track identity per KICKOFF.md

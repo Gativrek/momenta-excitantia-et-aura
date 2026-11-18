@@ -102,6 +102,14 @@ Single Gradle module (`:app`) for v1. Split into modules only if build times hur
   - The notification permission is requested on the first play (contextual), at most once per screen session.
   - Notification small icon: `ic_notification`, generated from `design/icons/notification.svg`.
   - Instrumented smoke test: `./gradlew connectedDebugAndroidTest` (emulator or device; not in CI).
+- **As built (Phase 4):**
+  - The session wraps ExoPlayer in `QueuePlayer` (a `ForwardingPlayer`). Whenever shuffle turns on, or the list is replaced while shuffled, it redraws the shuffle order **starting from the current track**. ExoPlayer's own random order could put the current track near the end, leaving only a few songs to play. This works for every controller (notification, Bluetooth), not just our UI.
+  - Queue edits work in **play order** (`PlayOrder`, unit-tested), so "Play next" and drag-to-reorder mean the same thing with shuffle on or off. With shuffle on they rewrite the shuffle order (`setShuffleOrder`) instead of the item list.
+  - Our UI gets extra custom session commands (`SessionProtocol`): play next, add to queue, move, set/cancel the sleep timer. They're granted only to controllers from our own package; everyone else gets the default command set. Remove and jump use standard `Player` commands.
+  - Sleep timer (deviation from "pause on the next `onMediaItemTransition`" above): "finish current track" sets ExoPlayer's `pauseAtEndOfMediaItems`, which stops exactly at the end of the track instead of a few milliseconds into the next one. The timer counts `elapsedRealtime` in 1 s steps, because a long `delay()` counts uptime, which stops in deep sleep. Its state reaches the UI through session extras.
+  - Saved state: Preferences DataStore file `playback_state`. It holds track IDs (item order), index, position, shuffle, repeat and the play order. Saved on queue, track, play/pause, seek and mode changes, every 10 s while playing, and when the task is removed or the service is destroyed. Nothing is saved until the restore has finished, so an empty player can't overwrite it.
+  - Restore runs in `PlaybackService.onCreate`, against MediaStore: missing tracks are dropped (`SavedQueue.keepOnly`, unit-tested). The player is **not prepared**, so no notification pops up at launch. `PlayerConnection` prepares on the first play.
+  - The saved queue is excluded from device transfer (`data_extraction_rules.xml`): MediaStore IDs mean nothing on another phone.
 
 ### Playlists (Room)
 - **MediaStore IDs are not stable forever.** They can change after a rescan, SD card remount or reinstall of files. Store a fingerprint with each entry:

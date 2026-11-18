@@ -1,11 +1,16 @@
 package io.github.gativrek.momenta
 
 import android.content.Context
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.preferencesDataStoreFile
 import io.github.gativrek.momenta.data.library.LibraryRepository
 import io.github.gativrek.momenta.data.library.MediaStoreSource
+import io.github.gativrek.momenta.playback.PlaybackStateStore
 import io.github.gativrek.momenta.playback.PlayerConnection
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.plus
 
 /**
  * Manual dependency injection: the single place that constructs repositories and
@@ -25,14 +30,30 @@ class AppContainer(
      */
     val applicationScope = CoroutineScope(SupervisorJob())
 
+    val mediaStoreSource: MediaStoreSource by lazy { MediaStoreSource(appContext.contentResolver) }
+
     val libraryRepository: LibraryRepository by lazy {
         LibraryRepository(
             resolver = appContext.contentResolver,
-            source = MediaStoreSource(appContext.contentResolver),
+            source = mediaStoreSource,
             scope = applicationScope,
+        )
+    }
+
+    /** One DataStore per file per process, hence created here and nowhere else. */
+    val playbackStateStore: PlaybackStateStore by lazy {
+        PlaybackStateStore(
+            PreferenceDataStoreFactory.create(scope = applicationScope + Dispatchers.IO) {
+                appContext.preferencesDataStoreFile(PLAYBACK_STATE_FILE)
+            },
         )
     }
 
     /** Connected/disconnected by MainActivity's onStart/onStop. */
     val playerConnection: PlayerConnection by lazy { PlayerConnection(appContext) }
+
+    private companion object {
+        /** Also named in the backup rules (res/xml), which exclude it. */
+        const val PLAYBACK_STATE_FILE = "playback_state"
+    }
 }

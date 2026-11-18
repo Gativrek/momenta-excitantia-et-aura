@@ -16,6 +16,7 @@ import io.github.gativrek.momenta.data.library.FolderContents
 import io.github.gativrek.momenta.data.library.Track
 import io.github.gativrek.momenta.playback.PlayerConnection
 import io.github.gativrek.momenta.ui.components.Loadable
+import io.github.gativrek.momenta.ui.components.QueueActions
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -41,6 +42,12 @@ abstract class LibraryViewModel<T>(
     ) = player.playTracks(tracks, startIndex)
 
     fun shuffle(tracks: List<Track>) = player.shuffleTracks(tracks)
+
+    val queueActions =
+        QueueActions(
+            playNext = { player.playNext(listOf(it)) },
+            addToQueue = { player.addToQueue(listOf(it)) },
+        )
 }
 
 class AlbumsViewModel(

@@ -17,19 +17,20 @@ import io.github.gativrek.momenta.R
 import io.github.gativrek.momenta.data.library.Track
 import io.github.gativrek.momenta.ui.format.formatDuration
 
-/** One line in a track list: art, title, "artist · album", duration. */
+/** One line in a track list: art, title, "artist · album", duration, and the queue menu. */
 @Composable
 fun TrackRow(
     track: Track,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    queueActions: QueueActions? = null,
 ) {
     Row(
         modifier =
             modifier
                 .fillMaxWidth()
                 .clickable(onClick = onClick)
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(start = 16.dp, end = if (queueActions != null) 4.dp else 16.dp, top = 8.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         ArtworkImage(track = track, size = 48.dp)
@@ -63,5 +64,6 @@ fun TrackRow(
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        if (queueActions != null) TrackMenuButton(track, queueActions)
     }
 }

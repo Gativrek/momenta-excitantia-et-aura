@@ -32,6 +32,7 @@ import io.github.gativrek.momenta.ui.components.Loadable
 import io.github.gativrek.momenta.ui.components.LoadingBox
 import io.github.gativrek.momenta.ui.components.PlaceholderScreen
 import io.github.gativrek.momenta.ui.components.PlayShuffleButtons
+import io.github.gativrek.momenta.ui.components.QueueActions
 import io.github.gativrek.momenta.ui.components.TrackRow
 import io.github.gativrek.momenta.ui.screens.FolderViewModel
 import io.github.gativrek.momenta.ui.screens.LibraryViewModels
@@ -78,6 +79,7 @@ fun FoldersScreen(
                         viewModel.shuffle(s.value.allTracks)
                         onPlayStarted()
                     },
+                    queueActions = viewModel.queueActions,
                     modifier = modifier,
                 )
             }
@@ -93,6 +95,7 @@ private fun FolderContent(
     onPlay: (index: Int) -> Unit,
     onPlayAll: () -> Unit,
     onShuffle: () -> Unit,
+    queueActions: QueueActions,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier.fillMaxSize()) {
@@ -108,7 +111,7 @@ private fun FolderContent(
                 FolderRow(folder = folder, onClick = { onFolderClick(folder) })
             }
             itemsIndexed(contents.tracks, key = { _, t -> t.id }, contentType = { _, _ -> "track" }) { index, track ->
-                TrackRow(track = track, onClick = { onPlay(index) })
+                TrackRow(track = track, onClick = { onPlay(index) }, queueActions = queueActions)
             }
         }
     }

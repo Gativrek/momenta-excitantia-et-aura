@@ -9,6 +9,7 @@ import io.github.gativrek.momenta.App
 import io.github.gativrek.momenta.data.library.LibraryRepository
 import io.github.gativrek.momenta.data.library.Track
 import io.github.gativrek.momenta.playback.PlayerConnection
+import io.github.gativrek.momenta.ui.components.QueueActions
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -49,6 +50,12 @@ class SongsViewModel(
         val tracks = (uiState.value as? SongsUiState.Loaded)?.tracks ?: return
         playerConnection.shuffleTracks(tracks)
     }
+
+    val queueActions =
+        QueueActions(
+            playNext = { playerConnection.playNext(listOf(it)) },
+            addToQueue = { playerConnection.addToQueue(listOf(it)) },
+        )
 
     companion object {
         /** Manual DI: pulls dependencies from the App's container. */

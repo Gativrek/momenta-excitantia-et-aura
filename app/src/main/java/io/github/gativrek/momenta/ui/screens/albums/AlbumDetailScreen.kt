@@ -31,6 +31,8 @@ import io.github.gativrek.momenta.ui.components.DetailTopBar
 import io.github.gativrek.momenta.ui.components.Loadable
 import io.github.gativrek.momenta.ui.components.LoadingBox
 import io.github.gativrek.momenta.ui.components.PlayShuffleButtons
+import io.github.gativrek.momenta.ui.components.QueueActions
+import io.github.gativrek.momenta.ui.components.TrackMenuButton
 import io.github.gativrek.momenta.ui.format.formatDuration
 import io.github.gativrek.momenta.ui.screens.AlbumDetailViewModel
 import io.github.gativrek.momenta.ui.screens.LibraryViewModels
@@ -63,6 +65,7 @@ fun AlbumDetailScreen(
                     viewModel.shuffle(album.tracks)
                     onPlayStarted()
                 },
+                queueActions = viewModel.queueActions,
                 modifier = modifier,
             )
         }
@@ -75,6 +78,7 @@ fun AlbumDetailContent(
     onBack: () -> Unit,
     onPlay: (index: Int) -> Unit,
     onShuffle: () -> Unit,
+    queueActions: QueueActions,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier.fillMaxSize()) {
@@ -100,6 +104,7 @@ fun AlbumDetailContent(
                     showNumber = album.hasTrackNumbers,
                     showArtist = album.isVarious || (track.artist != null && track.artist != album.artist),
                     onClick = { onPlay(index) },
+                    queueActions = queueActions,
                 )
             }
         }
@@ -149,9 +154,14 @@ private fun AlbumTrackRow(
     showNumber: Boolean,
     showArtist: Boolean,
     onClick: () -> Unit,
+    queueActions: QueueActions,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(start = 16.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (showNumber) {
@@ -187,5 +197,6 @@ private fun AlbumTrackRow(
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        TrackMenuButton(track, queueActions)
     }
 }

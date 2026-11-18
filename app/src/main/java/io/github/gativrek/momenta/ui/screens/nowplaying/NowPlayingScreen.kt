@@ -1,5 +1,6 @@
 package io.github.gativrek.momenta.ui.screens.nowplaying
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -11,17 +12,20 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,6 +34,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.Player
 import io.github.gativrek.momenta.R
 import io.github.gativrek.momenta.playback.PlayerUiState
 import io.github.gativrek.momenta.ui.components.ArtworkImage
@@ -41,6 +46,7 @@ import io.github.gativrek.momenta.ui.format.formatDuration
 fun NowPlayingScreen(
     viewModel: PlayerViewModel,
     onCollapse: () -> Unit,
+    onOpenQueue: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -51,6 +57,8 @@ fun NowPlayingScreen(
         if (state.connected && state.nowPlaying == null) onCollapse()
     }
 
+    var showSleepTimer by rememberSaveable { mutableStateOf(false) }
+
     NowPlayingContent(
         state = state,
         positionMs = position,
@@ -59,8 +67,21 @@ fun NowPlayingScreen(
         onPrevious = viewModel::previous,
         onNext = viewModel::next,
         onSeek = viewModel::seekTo,
+        onToggleShuffle = viewModel::toggleShuffle,
+        onCycleRepeat = viewModel::cycleRepeat,
+        onOpenSleepTimer = { showSleepTimer = true },
+        onOpenQueue = onOpenQueue,
         modifier = modifier,
     )
+
+    if (showSleepTimer) {
+        SleepTimerSheet(
+            timer = state.sleepTimer,
+            onStart = viewModel::setSleepTimer,
+            onCancelTimer = viewModel::cancelSleepTimer,
+            onDismiss = { showSleepTimer = false },
+        )
+    }
 }
 
 @Composable
@@ -72,13 +93,17 @@ fun NowPlayingContent(
     onPrevious: () -> Unit,
     onNext: () -> Unit,
     onSeek: (Long) -> Unit,
+    onToggleShuffle: () -> Unit,
+    onCycleRepeat: () -> Unit,
+    onOpenSleepTimer: () -> Unit,
+    onOpenQueue: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val nowPlaying = state.nowPlaying
     Surface(modifier = modifier.fillMaxSize()) {
         Column(
             // No systemBarsPadding here: the root Scaffold already pads its content for the bars.
-            modifier = Modifier.padding(horizontal = 24.dp),
+            modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Row(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
@@ -128,9 +153,18 @@ fun NowPlayingContent(
 
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                ModeButton(
+                    iconRes = R.drawable.ic_shuffle,
+                    label =
+                        stringResource(
+                            if (state.shuffle) R.string.action_shuffle_on else R.string.action_shuffle_off,
+                        ),
+                    active = state.shuffle,
+                    onClick = onToggleShuffle,
+                )
                 SkipButton(
                     next = false,
                     enabled = state.hasPrevious,
@@ -152,8 +186,74 @@ fun NowPlayingContent(
                     modifier = Modifier.size(64.dp),
                     iconSize = 32.dp,
                 )
+                ModeButton(
+                    iconRes =
+                        if (state.repeatMode ==
+                            Player.REPEAT_MODE_ONE
+                        ) {
+                            R.drawable.ic_repeat_one
+                        } else {
+                            R.drawable.ic_repeat
+                        },
+                    label =
+                        stringResource(
+                            when (state.repeatMode) {
+                                Player.REPEAT_MODE_ALL -> R.string.action_repeat_all
+                                Player.REPEAT_MODE_ONE -> R.string.action_repeat_one
+                                else -> R.string.action_repeat_off
+                            },
+                        ),
+                    active = state.repeatMode != Player.REPEAT_MODE_OFF,
+                    onClick = onCycleRepeat,
+                )
+            }
+
+            Spacer(Modifier.weight(1f))
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                TextButton(onClick = onOpenSleepTimer) {
+                    Icon(
+                        painterResource(R.drawable.ic_sleep_timer),
+                        contentDescription = null,
+                        modifier = Modifier.size(ButtonDefaults.IconSize),
+                    )
+                    Text(
+                        text = sleepTimerLabel(state.sleepTimer),
+                        modifier = Modifier.padding(start = ButtonDefaults.IconSpacing),
+                    )
+                }
+                TextButton(onClick = onOpenQueue) {
+                    Icon(
+                        painterResource(R.drawable.ic_queue),
+                        contentDescription = null,
+                        modifier = Modifier.size(ButtonDefaults.IconSize),
+                    )
+                    Text(
+                        text = stringResource(R.string.action_queue),
+                        modifier = Modifier.padding(start = ButtonDefaults.IconSpacing),
+                    )
+                }
             }
         }
+    }
+}
+
+/** Shuffle or repeat: tinted with the accent colour while on, its label says the current mode. */
+@Composable
+private fun ModeButton(
+    @DrawableRes iconRes: Int,
+    label: String,
+    active: Boolean,
+    onClick: () -> Unit,
+) {
+    IconButton(onClick = onClick, modifier = Modifier.size(48.dp)) {
+        Icon(
+            painter = painterResource(iconRes),
+            contentDescription = label,
+            tint = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

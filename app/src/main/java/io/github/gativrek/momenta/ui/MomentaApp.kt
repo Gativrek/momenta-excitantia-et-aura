@@ -23,6 +23,7 @@ import androidx.navigation.compose.rememberNavController
 import io.github.gativrek.momenta.ui.components.MiniPlayer
 import io.github.gativrek.momenta.ui.navigation.MomentaNavHost
 import io.github.gativrek.momenta.ui.navigation.NOW_PLAYING_ROUTE
+import io.github.gativrek.momenta.ui.navigation.QUEUE_ROUTE
 import io.github.gativrek.momenta.ui.navigation.TopLevelDestination
 import io.github.gativrek.momenta.ui.screens.nowplaying.PlayerViewModel
 import io.github.gativrek.momenta.ui.screens.permission.rememberNotificationPermissionRequest
@@ -36,7 +37,8 @@ fun MomentaApp() {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
-    val onNowPlaying = currentDestination?.route == NOW_PLAYING_ROUTE
+    // Now Playing and the queue are full-screen: no mini-player, no tabs.
+    val fullScreen = currentDestination?.route in setOf(NOW_PLAYING_ROUTE, QUEUE_ROUTE)
 
     // One PlayerViewModel for the whole app (scoped to the Activity), shared by both players.
     val playerViewModel: PlayerViewModel = viewModel(factory = PlayerViewModel.Factory)
@@ -44,7 +46,7 @@ fun MomentaApp() {
 
     Scaffold(
         bottomBar = {
-            if (!onNowPlaying) {
+            if (!fullScreen) {
                 Column {
                     MiniPlayerSlot(
                         playerViewModel = playerViewModel,

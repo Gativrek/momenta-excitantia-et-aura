@@ -26,6 +26,7 @@ import io.github.gativrek.momenta.ui.components.DetailTopBar
 import io.github.gativrek.momenta.ui.components.Loadable
 import io.github.gativrek.momenta.ui.components.LoadingBox
 import io.github.gativrek.momenta.ui.components.PlayShuffleButtons
+import io.github.gativrek.momenta.ui.components.QueueActions
 import io.github.gativrek.momenta.ui.components.TrackRow
 import io.github.gativrek.momenta.ui.screens.ArtistDetailViewModel
 import io.github.gativrek.momenta.ui.screens.LibraryViewModels
@@ -60,6 +61,7 @@ fun ArtistDetailScreen(
                     viewModel.shuffle(artist.tracks)
                     onPlayStarted()
                 },
+                queueActions = viewModel.queueActions,
                 modifier = modifier,
             )
         }
@@ -73,6 +75,7 @@ fun ArtistDetailContent(
     onAlbumClick: (Album) -> Unit,
     onPlay: (index: Int) -> Unit,
     onShuffle: () -> Unit,
+    queueActions: QueueActions,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier.fillMaxSize()) {
@@ -102,7 +105,7 @@ fun ArtistDetailContent(
             }
             item(key = "songs-title", contentType = "section") { SectionTitle(stringResource(R.string.section_songs)) }
             itemsIndexed(artist.tracks, key = { _, t -> t.id }, contentType = { _, _ -> "track" }) { index, track ->
-                TrackRow(track = track, onClick = { onPlay(index) })
+                TrackRow(track = track, onClick = { onPlay(index) }, queueActions = queueActions)
             }
         }
     }

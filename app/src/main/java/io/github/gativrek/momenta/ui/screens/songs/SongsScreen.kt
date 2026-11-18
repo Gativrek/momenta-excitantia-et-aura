@@ -21,6 +21,7 @@ import io.github.gativrek.momenta.R
 import io.github.gativrek.momenta.data.library.Track
 import io.github.gativrek.momenta.ui.components.PlaceholderScreen
 import io.github.gativrek.momenta.ui.components.PlayShuffleButtons
+import io.github.gativrek.momenta.ui.components.QueueActions
 import io.github.gativrek.momenta.ui.components.TrackRow
 
 @Composable
@@ -44,6 +45,7 @@ fun SongsScreen(
             viewModel.shuffleAll()
             onPlayStarted()
         },
+        queueActions = viewModel.queueActions,
         modifier = modifier,
     )
 }
@@ -55,6 +57,7 @@ fun SongsContent(
     onTrackClick: (Track) -> Unit,
     onPlayAll: () -> Unit,
     onShuffle: () -> Unit,
+    queueActions: QueueActions,
     modifier: Modifier = Modifier,
 ) {
     when (state) {
@@ -87,7 +90,7 @@ fun SongsContent(
                     // Stable keys (KICKOFF.md): rows keep their state and animate correctly
                     // when the library changes underneath them.
                     items(state.tracks, key = { it.id }, contentType = { "track" }) { track ->
-                        TrackRow(track = track, onClick = { onTrackClick(track) })
+                        TrackRow(track = track, onClick = { onTrackClick(track) }, queueActions = queueActions)
                     }
                 }
             }

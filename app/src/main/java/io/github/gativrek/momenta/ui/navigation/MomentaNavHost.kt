@@ -19,10 +19,14 @@ import io.github.gativrek.momenta.ui.screens.folders.FoldersScreen
 import io.github.gativrek.momenta.ui.screens.nowplaying.NowPlayingScreen
 import io.github.gativrek.momenta.ui.screens.nowplaying.PlayerViewModel
 import io.github.gativrek.momenta.ui.screens.playlists.PlaylistsScreen
+import io.github.gativrek.momenta.ui.screens.queue.QueueScreen
 import io.github.gativrek.momenta.ui.screens.songs.SongsScreen
 
 /** Full-screen player, opened from the mini-player. Not a tab, so the bottom bar hides. */
 const val NOW_PLAYING_ROUTE = "now_playing"
+
+/** The queue, opened from Now Playing. Also full-screen. */
+const val QUEUE_ROUTE = "queue"
 
 /**
  * Each tab is a nested graph whose route is the tab's route. Detail screens live inside
@@ -107,7 +111,15 @@ fun MomentaNavHost(
         }
 
         composable(NOW_PLAYING_ROUTE) {
-            NowPlayingScreen(viewModel = playerViewModel, onCollapse = { navController.popBackStack() })
+            NowPlayingScreen(
+                viewModel = playerViewModel,
+                onCollapse = { navController.popBackStack() },
+                onOpenQueue = { navController.navigate(QUEUE_ROUTE) { launchSingleTop = true } },
+            )
+        }
+
+        composable(QUEUE_ROUTE) {
+            QueueScreen(viewModel = playerViewModel, onBack = { navController.popBackStack() })
         }
     }
 }

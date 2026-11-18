@@ -12,5 +12,9 @@
         <exclude domain="sharedpref" path="." />
         <exclude domain="external" path="." />
     </cloud-backup>
-    <device-transfer />
+    <!-- The saved queue is a list of MediaStore IDs, which point at different files (or
+         none) on another phone. Everything else may follow you. -->
+    <device-transfer>
+        <exclude domain="file" path="datastore/playback_state.preferences_pb" />
+    </device-transfer>
 </data-extraction-rules>
