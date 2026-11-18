@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="108" height="108" viewBox="0 0 108 108" fill="none" stroke-linecap="round" stroke-linejoin="miter">
+  <!-- The aura: a halo rising like a dawn, open at the bottom where the horizon is. -->
+  <path d="M31.34 66.57A25 25 0 1 1 76.66 66.57" stroke="#F2C14E" stroke-width="3.5"/>
+  <!-- The momentum: an M of two rising wings, two voices meeting in the middle. -->
+  <path d="M29 76L41 37L54 61L67 37L79 76" stroke="#F4EFE6" stroke-width="6.5"/>
+  <!-- The new dream: a spark born between the peaks. -->
+  <path d="M54 30L56.2 38.8L65 41L56.2 43.2L54 52L51.8 43.2L43 41L51.8 38.8Z" fill="#F2C14E"/>
+</svg>

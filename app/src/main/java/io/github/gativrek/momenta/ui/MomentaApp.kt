@@ -10,9 +10,11 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -25,6 +27,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import io.github.gativrek.momenta.R
 import io.github.gativrek.momenta.ui.components.MiniPlayer
+import io.github.gativrek.momenta.ui.navigation.APPEARANCE_ROUTE
 import io.github.gativrek.momenta.ui.navigation.MomentaNavHost
 import io.github.gativrek.momenta.ui.navigation.NOW_PLAYING_ROUTE
 import io.github.gativrek.momenta.ui.navigation.QUEUE_ROUTE
@@ -43,8 +46,8 @@ fun MomentaApp() {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
-    // Now Playing and the queue are full-screen: no mini-player, no tabs.
-    val fullScreen = currentDestination?.route in setOf(NOW_PLAYING_ROUTE, QUEUE_ROUTE)
+    // Now Playing, the queue and Appearance are full-screen: no mini-player, no tabs.
+    val fullScreen = currentDestination?.route in setOf(NOW_PLAYING_ROUTE, QUEUE_ROUTE, APPEARANCE_ROUTE)
     // Search keeps the mini-player (you start music from it) but not the tabs.
     val showTabs = !fullScreen && currentDestination?.route != SEARCH_ROUTE
     // The tab whose root list is showing, if any: it gets a title bar with the search button.
@@ -60,11 +63,14 @@ fun MomentaApp() {
     val requestNotifications = rememberNotificationPermissionRequest()
 
     Scaffold(
+        // Transparent: the theme's backdrop (drawn by MainActivity) shows behind every screen.
+        containerColor = Color.Transparent,
         topBar = {
             if (tabRoot != null) {
                 TabTopBar(
                     title = stringResource(tabRoot.labelRes),
                     onSearch = { navController.navigate(SEARCH_ROUTE) { launchSingleTop = true } },
+                    onAppearance = { navController.navigate(APPEARANCE_ROUTE) { launchSingleTop = true } },
                 )
             }
         },
@@ -94,6 +100,7 @@ fun MomentaApp() {
 private fun TabTopBar(
     title: String,
     onSearch: () -> Unit,
+    onAppearance: () -> Unit,
 ) {
     TopAppBar(
         title = { Text(title) },
@@ -101,7 +108,14 @@ private fun TabTopBar(
             IconButton(onClick = onSearch) {
                 Icon(painterResource(R.drawable.ic_search), contentDescription = stringResource(R.string.action_search))
             }
+            IconButton(onClick = onAppearance) {
+                Icon(
+                    painterResource(R.drawable.ic_palette),
+                    contentDescription = stringResource(R.string.action_appearance),
+                )
+            }
         },
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
     )
 }
 

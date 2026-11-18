@@ -7,6 +7,7 @@ import io.github.gativrek.momenta.data.library.LibraryRepository
 import io.github.gativrek.momenta.data.library.MediaStoreSource
 import io.github.gativrek.momenta.data.playlists.MomentaDatabase
 import io.github.gativrek.momenta.data.playlists.PlaylistRepository
+import io.github.gativrek.momenta.data.settings.AppearanceStore
 import io.github.gativrek.momenta.playback.PlaybackStateStore
 import io.github.gativrek.momenta.playback.PlayerConnection
 import kotlinx.coroutines.CoroutineScope
@@ -57,11 +58,24 @@ class AppContainer(
         PlaylistRepository(database.playlistDao(), libraryRepository, applicationScope)
     }
 
+    /** The user's theme. Created on first use, which is the first frame: MainActivity reads it at once. */
+    val appearanceStore: AppearanceStore by lazy {
+        AppearanceStore(
+            PreferenceDataStoreFactory.create(scope = applicationScope + Dispatchers.IO) {
+                appContext.preferencesDataStoreFile(APPEARANCE_FILE)
+            },
+            scope = applicationScope,
+        )
+    }
+
     /** Connected/disconnected by MainActivity's onStart/onStop. */
     val playerConnection: PlayerConnection by lazy { PlayerConnection(appContext) }
 
     private companion object {
         /** Also named in the backup rules (res/xml), which exclude it. */
         const val PLAYBACK_STATE_FILE = "playback_state"
+
+        /** Backed up like any setting: a theme is worth keeping on a new phone. */
+        const val APPEARANCE_FILE = "appearance"
     }
 }

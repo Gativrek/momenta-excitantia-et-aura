@@ -25,6 +25,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -193,7 +194,12 @@ private fun QueueRow(
     dragHandle: (@Composable () -> Unit)? = null,
 ) {
     Surface(
-        color = if (highlighted) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
+        color =
+            when {
+                highlighted -> MaterialTheme.colorScheme.secondaryContainer
+                elevated -> MaterialTheme.colorScheme.surfaceContainerHigh
+                else -> Color.Transparent
+            },
         shadowElevation = if (elevated) 8.dp else 0.dp,
     ) {
         Row(

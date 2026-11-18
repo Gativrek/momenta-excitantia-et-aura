@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated from design/logo/logo.svg by tools/svg_to_vector.py. Edit the SVG, not this file. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:pathData="M31.34 66.57A25 25 0 1 1 76.66 66.57"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="miter" />
+    <path
+        android:pathData="M29 76L41 37L54 61L67 37L79 76"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="6.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="miter" />
+    <path
+        android:pathData="M54 30L56.2 38.8L65 41L56.2 43.2L54 52L51.8 43.2L43 41L51.8 38.8Z"
+        android:fillColor="#FF000000" />
+</vector>

@@ -12,8 +12,13 @@ stroke attributes, containing only <path d="..."> elements. Icons are line-only
 Outputs:
   drawable/ic_<name>.xml   24dp, black stroke (Compose's Icon tints it)
                            e.g. nav_songs.svg -> ic_nav_songs.xml
-  drawable/ic_launcher_foreground.xml   from nav_songs.svg, centred in the
-                                        108dp adaptive-icon canvas
+  drawable/ic_launcher_foreground.xml   from design/logo/logo.svg, in its colors
+  drawable/ic_launcher_monochrome.xml   the same shapes in one color (themed icons)
+  ui/theme/LogoPaths.kt                 the logo's path data, so the app can draw
+                                        the logo in the current theme's colors
+
+The logo SVG is 108x108 (the adaptive-icon canvas, content inside the 66dp safe
+zone) and each <path> carries its own stroke or fill color.
 """
 
 import sys
@@ -25,8 +30,8 @@ SRC = ROOT / "design" / "icons"
 OUT = ROOT / "app" / "src" / "main" / "res" / "drawable"
 SVG_NS = "{http://www.w3.org/2000/svg}"
 
-LAUNCHER_SOURCE = "nav_songs"
-LAUNCHER_SCALE = 2.0  # 24 -> 48 units, well inside the 66dp safe zone
+LOGO = ROOT / "design" / "logo" / "logo.svg"
+LOGO_KOTLIN = ROOT / "app" / "src" / "main" / "java" / "io" / "github" / "gativrek" / "momenta" / "ui" / "theme" / "LogoPaths.kt"
 
 
 def read_svg(path: Path):
@@ -75,19 +80,64 @@ def nav_icon(name: str) -> str:
     )
 
 
-def launcher_foreground() -> str:
-    w, _, stroke, paths = read_svg(SRC / f"{LAUNCHER_SOURCE}.svg")
-    offset = (108 - w * LAUNCHER_SCALE) / 2
-    body = "".join(path_xml(d, stroke, "@color/ic_launcher_foreground", "        ") for d in paths)
+def read_logo():
+    """(cap, join, [(d, stroke, fill, stroke_width)]) with paths in document order."""
+    root = ET.parse(LOGO).getroot()
+    cap = root.attrib.get("stroke-linecap", "round")
+    join = root.attrib.get("stroke-linejoin", "miter")
+    parts = []
+    for el in root.iter(f"{SVG_NS}path"):
+        stroke = el.attrib.get("stroke")
+        fill = el.attrib.get("fill")
+        parts.append((el.attrib["d"], stroke, fill, el.attrib.get("stroke-width", "2")))
+    return cap, join, parts
+
+
+def android_color(svg_color: str) -> str:
+    return "#FF" + svg_color.lstrip("#").upper()
+
+
+def logo_vector(monochrome: bool) -> str:
+    cap, join, parts = read_logo()
+    body = ""
+    for d, stroke, fill, width in parts:
+        body += f'    <path\n        android:pathData="{d}"\n'
+        if fill:
+            body += f'        android:fillColor="{"#FF000000" if monochrome else android_color(fill)}"'
+        else:
+            body += (
+                f'        android:strokeColor="{"#FF000000" if monochrome else android_color(stroke)}"\n'
+                f'        android:strokeWidth="{width}"\n'
+                f'        android:strokeLineCap="{cap}"\n'
+                f'        android:strokeLineJoin="{join}"'
+            )
+        body += " />\n"
     return (
-        header(LAUNCHER_SOURCE)
-        + '<vector xmlns:android="http://schemas.android.com/apk/res/android"\n'
-        + '    android:width="108dp"\n    android:height="108dp"\n'
-        + '    android:viewportWidth="108"\n    android:viewportHeight="108">\n'
-        + f'    <group\n        android:scaleX="{LAUNCHER_SCALE:g}"\n        android:scaleY="{LAUNCHER_SCALE:g}"\n'
-        + f'        android:translateX="{offset:g}"\n        android:translateY="{offset:g}">\n'
+        '<?xml version="1.0" encoding="utf-8"?>\n'
+        "<!-- Generated from design/logo/logo.svg by tools/svg_to_vector.py. Edit the SVG, not this file. -->\n"
+        '<vector xmlns:android="http://schemas.android.com/apk/res/android"\n'
+        '    android:width="108dp"\n    android:height="108dp"\n'
+        '    android:viewportWidth="108"\n    android:viewportHeight="108">\n'
         + body
-        + "    </group>\n</vector>\n"
+        + "</vector>\n"
+    )
+
+
+def logo_kotlin() -> str:
+    _, _, parts = read_logo()
+    halo, mark, spark = parts
+    return (
+        "// Generated from design/logo/logo.svg by tools/svg_to_vector.py. Edit the SVG, not this file.\n"
+        "package io.github.gativrek.momenta.ui.theme\n\n"
+        "/** The logo's shapes on its 108x108 canvas: the halo (accent), the M (ink) and the spark (accent). */\n"
+        "internal object LogoPaths {\n"
+        "    const val VIEWPORT = 108f\n"
+        f'    const val HALO = "{halo[0]}"\n'
+        f"    const val HALO_WIDTH = {float(halo[3])}f\n"
+        f'    const val MARK = "{mark[0]}"\n'
+        f"    const val MARK_WIDTH = {float(mark[3])}f\n"
+        f'    const val SPARK = "{spark[0]}"\n'
+        "}\n"
     )
 
 
@@ -97,9 +147,14 @@ def main() -> None:
         target = OUT / f"ic_{svg.stem}.xml"
         target.write_text(nav_icon(svg.stem), encoding="utf-8", newline="\n")
         print(f"wrote {target.relative_to(ROOT)}")
-    target = OUT / "ic_launcher_foreground.xml"
-    target.write_text(launcher_foreground(), encoding="utf-8", newline="\n")
-    print(f"wrote {target.relative_to(ROOT)}")
+    outputs = {
+        OUT / "ic_launcher_foreground.xml": logo_vector(monochrome=False),
+        OUT / "ic_launcher_monochrome.xml": logo_vector(monochrome=True),
+        LOGO_KOTLIN: logo_kotlin(),
+    }
+    for target, text in outputs.items():
+        target.write_text(text, encoding="utf-8", newline="\n")
+        print(f"wrote {target.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":

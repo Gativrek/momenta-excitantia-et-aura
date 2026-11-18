@@ -121,4 +121,65 @@
 
     <string name="songs_empty_title">No music found</string>
     <string name="songs_empty_body">Copy audio files to this phone, for example into the Music folder, and they\'ll appear here.</string>
+
+    <!-- Appearance -->
+    <string name="action_appearance">Appearance</string>
+    <string name="action_apply">Apply</string>
+    <string name="appearance_title">Appearance</string>
+    <string name="appearance_reset">Reset</string>
+    <!-- Under the theme name: the theme is exactly as it ships, or has been edited. -->
+    <string name="appearance_as_built">As built</string>
+    <string name="appearance_customized">Customized</string>
+    <string name="appearance_themes">Themes</string>
+    <string name="appearance_pattern">Pattern</string>
+    <string name="appearance_colors">Colors</string>
+    <string name="appearance_feel">Feel</string>
+    <string name="appearance_pattern_strength">Pattern strength</string>
+    <!-- The glow of the accent color at the top of every screen. -->
+    <string name="appearance_aura">Aura</string>
+    <string name="appearance_corners">Corners</string>
+    <string name="percent">%d%%</string>
+    <!-- Stand-in track on the Appearance screen's sample player. -->
+    <string name="sample_title">The way home</string>
+    <string name="sample_artist">Momenta Excitantia et Aura</string>
+
+    <string name="color_background">Background</string>
+    <string name="color_background_desc">What every screen sits on</string>
+    <string name="color_accent">Accent</string>
+    <string name="color_accent_desc">Buttons, sliders, the playing track, the aura</string>
+    <string name="color_spark">Spark</string>
+    <string name="color_spark_desc">A second accent and the lower glow</string>
+    <string name="color_pattern">Pattern</string>
+    <string name="color_pattern_desc">The color the pattern is drawn in</string>
+    <string name="color_hue">Hue</string>
+    <string name="color_saturation">Saturation</string>
+    <string name="color_brightness">Brightness</string>
+    <string name="color_hex">Hex</string>
+
+    <string name="edge_sharp">Sharp</string>
+    <string name="edge_round">Round</string>
+
+    <string name="pattern_halo">Halo</string>
+    <string name="pattern_fracture">Fracture</string>
+    <string name="pattern_radar">Radar</string>
+    <string name="pattern_bars">Bars</string>
+    <string name="pattern_speed">Speed</string>
+    <string name="pattern_slash">Slash</string>
+    <string name="pattern_embers">Embers</string>
+    <string name="pattern_rain">Rain</string>
+    <string name="pattern_tears">Tears</string>
+    <string name="pattern_domain">Domain</string>
+    <string name="pattern_none">None</string>
+
+    <!-- Built-in theme names. Each is named after the music that inspired it (design/THEMES.md). -->
+    <string name="preset_ragnarok">Ragnarok</string>
+    <string name="preset_justice">Justice</string>
+    <string name="preset_hangar">Hangar</string>
+    <string name="preset_bars">Bars</string>
+    <string name="preset_heaven">Heaven</string>
+    <string name="preset_azure">Azure</string>
+    <string name="preset_brimstone">Brimstone</string>
+    <string name="preset_monsoon">Monsoon</string>
+    <string name="preset_basement">Basement</string>
+    <string name="preset_domain">Domain</string>
 </resources>

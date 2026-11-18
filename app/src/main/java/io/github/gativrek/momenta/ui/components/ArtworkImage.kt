@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -19,6 +20,8 @@ import io.github.gativrek.momenta.R
 import io.github.gativrek.momenta.data.library.Artwork
 import io.github.gativrek.momenta.data.library.Track
 import io.github.gativrek.momenta.data.library.artworkModel
+import io.github.gativrek.momenta.ui.theme.Edge
+import io.github.gativrek.momenta.ui.theme.LocalThemeSpec
 
 /** Cover art for a library track. */
 @Composable
@@ -29,7 +32,7 @@ fun ArtworkImage(
 ) = ArtworkImage(artwork = artworkModel(track), size = size, modifier = modifier)
 
 /**
- * Cover art in a rounded square. The line-icon note underneath shows while loading and
+ * Cover art in a square with the theme's corners (cut or rounded). The line-icon note underneath shows while loading and
  * stays visible when there is no art (the image simply never draws over it).
  */
 @Composable
@@ -42,8 +45,15 @@ fun ArtworkImage(
         modifier =
             modifier
                 .size(size)
-                .clip(RoundedCornerShape(size / 8))
-                .background(MaterialTheme.colorScheme.surfaceVariant),
+                .clip(
+                    if (LocalThemeSpec.current.edge ==
+                        Edge.Sharp
+                    ) {
+                        CutCornerShape(size / 10)
+                    } else {
+                        RoundedCornerShape(size / 8)
+                    },
+                ).background(MaterialTheme.colorScheme.surfaceVariant),
         contentAlignment = Alignment.Center,
     ) {
         Icon(

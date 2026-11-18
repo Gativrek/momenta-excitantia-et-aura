@@ -11,3 +11,8 @@ captures/
 *.keystore
 *.jks
 keystore.properties
+
+# Spec-driven development docs (goals, roadmap, kickoff, design notes, agent instructions)
+# stay local. README is the only markdown published.
+*.md
+!/README.md

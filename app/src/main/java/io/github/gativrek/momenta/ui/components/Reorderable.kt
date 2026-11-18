@@ -22,6 +22,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
@@ -158,7 +159,12 @@ fun DragHandle(gestures: suspend PointerInputScope.() -> Unit) {
     }
 }
 
-/** Swipe either way to remove; the row vanishes at once and [onRemove] runs once. */
+/**
+ * Swipe either way to remove; the row vanishes at once and [onRemove] runs once.
+ *
+ * Rows are see-through at rest (the theme's backdrop shows behind them), so the red
+ * "Removed" layer and a solid row color only appear while a swipe is under way.
+ */
 @Composable
 fun SwipeToRemove(
     onRemove: () -> Unit,
@@ -180,10 +186,12 @@ fun SwipeToRemove(
                 }
             },
         )
+    val swiping = state.dismissDirection != SwipeToDismissBoxValue.Settled
     SwipeToDismissBox(
         state = state,
         modifier = modifier,
         backgroundContent = {
+            if (!swiping) return@SwipeToDismissBox
             Box(
                 modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.errorContainer),
                 contentAlignment = Alignment.Center,
@@ -195,5 +203,12 @@ fun SwipeToRemove(
                 )
             }
         },
-    ) { content() }
+    ) {
+        Box(
+            modifier =
+                Modifier.background(
+                    if (swiping) MaterialTheme.colorScheme.surfaceContainerHigh else Color.Transparent,
+                ),
+        ) { content() }
+    }
 }

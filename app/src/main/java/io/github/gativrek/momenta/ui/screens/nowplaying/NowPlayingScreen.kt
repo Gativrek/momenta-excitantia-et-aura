@@ -29,6 +29,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -100,7 +101,8 @@ fun NowPlayingContent(
     modifier: Modifier = Modifier,
 ) {
     val nowPlaying = state.nowPlaying
-    Surface(modifier = modifier.fillMaxSize()) {
+    // Transparent: the theme's backdrop is the Now Playing background.
+    Surface(modifier = modifier.fillMaxSize(), color = Color.Transparent) {
         Column(
             // No systemBarsPadding here: the root Scaffold already pads its content for the bars.
             modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),

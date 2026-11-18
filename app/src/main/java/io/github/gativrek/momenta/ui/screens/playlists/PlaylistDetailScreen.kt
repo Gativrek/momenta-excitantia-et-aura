@@ -29,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -251,7 +252,10 @@ private fun EntryRow(
     dragHandle: @Composable () -> Unit,
 ) {
     val track = item.track
-    Surface(shadowElevation = if (elevated) 8.dp else 0.dp) {
+    Surface(
+        color = if (elevated) MaterialTheme.colorScheme.surfaceContainerHigh else Color.Transparent,
+        shadowElevation = if (elevated) 8.dp else 0.dp,
+    ) {
         Row(
             modifier =
                 Modifier

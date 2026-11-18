@@ -4,7 +4,7 @@
 
 No streaming, no accounts, no network permission. It finds the music on your device and plays it reliably: in the background, with the screen off, over Bluetooth, and it gets out of the way when something else needs the speaker.
 
-> **Status:** feature-complete for v1.0; the real-device checklist is next. See [ROADMAP.md](ROADMAP.md).
+> **Status:** in development toward v1.0. Playback, library, playlists and themes are done; tag editing and the real-device checklist are next.
 
 ## Features (v1 target)
 
@@ -20,6 +20,7 @@ No streaming, no accounts, no network permission. It finds the music on your dev
 - **Gapless playback**
 - **Sleep timer**
 - **Restores your queue and position** after the app is killed or the phone reboots
+- **Themes:** ten built-in looks, each with its own vector pattern, and every color, pattern, glow and corner style editable live. Text stays readable whatever colors you pick
 
 ## Tech stack
 
@@ -50,7 +51,7 @@ cd momenta-excitantia-et-aura
 # APK: app/build/outputs/apk/debug/
 ```
 
-Release builds are signed from a local `keystore.properties`; see [KICKOFF.md](KICKOFF.md#releasing).
+Release builds are signed from a local `keystore.properties` in the project root (gitignored) or from environment variables of the same names: `MOMENTA_KEYSTORE`, `MOMENTA_KEYSTORE_PASSWORD`, `MOMENTA_KEY_ALIAS`, `MOMENTA_KEY_PASSWORD`. Without them, `./gradlew assembleRelease` builds an unsigned APK.
 
 ## Permissions
 
@@ -62,12 +63,6 @@ Release builds are signed from a local `keystore.properties`; see [KICKOFF.md](K
 | `WAKE_LOCK` | Keep playing with the screen off |
 
 There is no `INTERNET` permission. The app never leaves your phone.
-
-## Docs
-
-- [GOALS.md](GOALS.md): what this app is and isn't
-- [ROADMAP.md](ROADMAP.md): phased plan
-- [KICKOFF.md](KICKOFF.md): architecture, conventions and build instructions for development (human or agent)
 
 ## License
 

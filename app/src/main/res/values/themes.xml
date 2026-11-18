@@ -2,9 +2,10 @@
 <resources>
     <!--
         Window-level theme only (what shows before Compose draws: the starting window and its
-        background). All in-app styling lives in Compose's MomentaTheme.
+        background). All in-app styling lives in Compose's MomentaTheme, built from the
+        user's chosen theme. The default theme is dark, so the window is too.
     -->
-    <style name="Theme.Momenta" parent="android:Theme.Material.Light.NoActionBar">
+    <style name="Theme.Momenta" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/window_background</item>
     </style>
 </resources>

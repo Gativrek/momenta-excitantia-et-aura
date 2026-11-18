@@ -13,6 +13,7 @@ import androidx.navigation.navArgument
 import io.github.gativrek.momenta.ui.screens.NavArgs
 import io.github.gativrek.momenta.ui.screens.albums.AlbumDetailScreen
 import io.github.gativrek.momenta.ui.screens.albums.AlbumsScreen
+import io.github.gativrek.momenta.ui.screens.appearance.AppearanceScreen
 import io.github.gativrek.momenta.ui.screens.artists.ArtistDetailScreen
 import io.github.gativrek.momenta.ui.screens.artists.ArtistsScreen
 import io.github.gativrek.momenta.ui.screens.folders.FoldersScreen
@@ -29,6 +30,9 @@ const val NOW_PLAYING_ROUTE = "now_playing"
 
 /** The queue, opened from Now Playing. Also full-screen. */
 const val QUEUE_ROUTE = "queue"
+
+/** Theme settings, opened from the top bar of any tab. Full-screen, so the whole screen previews the theme. */
+const val APPEARANCE_ROUTE = "appearance"
 
 /** Search, opened from the top bar of any tab. Not inside a tab: results open in their own tab. */
 const val SEARCH_ROUTE = "search"
@@ -139,6 +143,10 @@ fun MomentaNavHost(
                 onArtistClick = { navController.navigate("$artistsTab/artist/${it.id}") },
                 onPlayStarted = onPlayStarted,
             )
+        }
+
+        composable(APPEARANCE_ROUTE) {
+            AppearanceScreen(onBack = { navController.popBackStack() })
         }
 
         composable(QUEUE_ROUTE) {
