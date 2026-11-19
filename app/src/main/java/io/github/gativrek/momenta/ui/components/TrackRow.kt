@@ -28,6 +28,7 @@ fun TrackRow(
     Row(
         modifier =
             modifier
+                .introFlyUp()
                 .fillMaxWidth()
                 .clickable(onClick = onClick)
                 .padding(start = 16.dp, end = if (queueActions != null) 4.dp else 16.dp, top = 8.dp, bottom = 8.dp),

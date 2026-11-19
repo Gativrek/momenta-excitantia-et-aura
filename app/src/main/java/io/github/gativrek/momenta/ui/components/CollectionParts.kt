@@ -89,9 +89,15 @@ fun DetailTopBar(
     )
 }
 
-/** Centered spinner while a library flow produces its first value. */
+/**
+ * Centered spinner while a library flow produces its first value. While one is showing, the
+ * startup intro waits, so it reveals the list instead of the spinner.
+ */
 @Composable
 fun LoadingBox(modifier: Modifier = Modifier) {
+    HoldStartupIntro()
+    // At launch the list flies in a moment later; a spinner flashing first would only distract.
+    if (introPending()) return
     Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
 }
 

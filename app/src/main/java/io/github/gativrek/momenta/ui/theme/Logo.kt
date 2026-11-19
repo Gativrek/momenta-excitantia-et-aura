@@ -9,6 +9,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.vector.PathParser
@@ -31,16 +32,22 @@ fun MomentaLogo(
     accent: Color = MaterialTheme.colorScheme.primary,
     ink: Color = MaterialTheme.colorScheme.onBackground,
 ) {
-    Canvas(modifier = modifier.size(size)) {
-        val s = this.size.minDimension / LogoPaths.VIEWPORT
-        scale(s, pivot = Offset.Zero) {
-            drawPath(haloPath, accent, style = Stroke(LogoPaths.HALO_WIDTH, cap = StrokeCap.Round))
-            drawPath(
-                markPath,
-                ink,
-                style = Stroke(LogoPaths.MARK_WIDTH, cap = StrokeCap.Round, join = StrokeJoin.Miter),
-            )
-            drawPath(sparkPath, accent)
-        }
+    Canvas(modifier = modifier.size(size)) { drawLogo(this.size.minDimension, accent, ink) }
+}
+
+/** The logo's full 108-unit canvas drawn [size] pixels wide, from the current origin. */
+fun DrawScope.drawLogo(
+    size: Float,
+    accent: Color,
+    ink: Color,
+) {
+    scale(size / LogoPaths.VIEWPORT, pivot = Offset.Zero) {
+        drawPath(haloPath, accent, style = Stroke(LogoPaths.HALO_WIDTH, cap = StrokeCap.Round))
+        drawPath(
+            markPath,
+            ink,
+            style = Stroke(LogoPaths.MARK_WIDTH, cap = StrokeCap.Round, join = StrokeJoin.Miter),
+        )
+        drawPath(sparkPath, accent)
     }
 }

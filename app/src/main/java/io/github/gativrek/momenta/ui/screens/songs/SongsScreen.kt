@@ -5,12 +5,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -19,10 +17,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.gativrek.momenta.R
 import io.github.gativrek.momenta.data.library.Track
+import io.github.gativrek.momenta.ui.components.LoadingBox
 import io.github.gativrek.momenta.ui.components.PlaceholderScreen
 import io.github.gativrek.momenta.ui.components.PlayShuffleButtons
 import io.github.gativrek.momenta.ui.components.QueueActions
 import io.github.gativrek.momenta.ui.components.TrackRow
+import io.github.gativrek.momenta.ui.components.introFlyUp
 
 @Composable
 fun SongsScreen(
@@ -61,10 +61,7 @@ fun SongsContent(
     modifier: Modifier = Modifier,
 ) {
     when (state) {
-        SongsUiState.Loading ->
-            Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
+        SongsUiState.Loading -> LoadingBox(modifier)
 
         is SongsUiState.Loaded ->
             if (state.tracks.isEmpty()) {
@@ -81,11 +78,11 @@ fun SongsContent(
                             text = pluralStringResource(R.plurals.song_count, state.tracks.size, state.tracks.size),
                             style = MaterialTheme.typography.titleSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp),
+                            modifier = Modifier.introFlyUp().padding(start = 16.dp, top = 16.dp, bottom = 8.dp),
                         )
                     }
                     item(key = "actions", contentType = "actions") {
-                        PlayShuffleButtons(onPlayAll = onPlayAll, onShuffle = onShuffle)
+                        Box(Modifier.introFlyUp()) { PlayShuffleButtons(onPlayAll = onPlayAll, onShuffle = onShuffle) }
                     }
                     // Stable keys: rows keep their state and animate correctly
                     // when the library changes underneath them.

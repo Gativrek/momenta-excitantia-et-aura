@@ -1,6 +1,7 @@
 package io.github.gativrek.momenta.ui
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -15,10 +16,12 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination
@@ -29,6 +32,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import io.github.gativrek.momenta.R
 import io.github.gativrek.momenta.ui.components.MiniPlayer
+import io.github.gativrek.momenta.ui.components.introLogoTarget
 import io.github.gativrek.momenta.ui.navigation.APPEARANCE_ROUTE
 import io.github.gativrek.momenta.ui.navigation.AURA_ROUTE
 import io.github.gativrek.momenta.ui.navigation.MOMENTS_ROUTE
@@ -40,6 +44,7 @@ import io.github.gativrek.momenta.ui.navigation.TopLevelDestination
 import io.github.gativrek.momenta.ui.screens.NavArgs
 import io.github.gativrek.momenta.ui.screens.nowplaying.PlayerViewModel
 import io.github.gativrek.momenta.ui.screens.permission.rememberNotificationPermissionRequest
+import io.github.gativrek.momenta.ui.theme.MomentaLogo
 import io.github.gativrek.momenta.ui.theme.moment
 
 /**
@@ -114,7 +119,13 @@ private fun TabTopBar(
     onAppearance: () -> Unit,
 ) {
     TopAppBar(
-        title = { Text(title) },
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // Where the launch screen's logo comes to rest (see StartupIntro).
+                MomentaLogo(modifier = Modifier.padding(end = 2.dp).introLogoTarget(), size = TITLE_LOGO_SIZE)
+                Text(title)
+            }
+        },
         actions = {
             IconButton(onClick = onMoments) {
                 Icon(
@@ -186,3 +197,6 @@ private fun BottomBar(
         }
     }
 }
+
+/** The logo's canvas beside the tab's name; the drawn logo is about half of it. */
+private val TITLE_LOGO_SIZE = 40.dp

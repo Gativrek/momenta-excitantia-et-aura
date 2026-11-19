@@ -18,6 +18,7 @@ No streaming, no accounts, no network permission. It finds the music on your dev
 - **Pauses when headphones are unplugged** or Bluetooth disconnects
 - **Playlists:** create, rename, reorder and delete
 - **Queue:** shuffle, repeat (off/all/one), reorder and remove upcoming tracks
+- **A proper entrance:** the logo glides from the launch screen to its place beside the tab name while your songs fly up into the list
 - **A cover that follows the queue:** on Now Playing the cover slides out as the next song slides in (and back the other way). Drag it right to left to skip, left to right to go back
 - **Gapless playback**
 - **Sleep timer**
