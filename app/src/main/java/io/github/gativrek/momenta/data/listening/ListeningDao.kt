@@ -60,6 +60,16 @@ interface ListeningDao {
     )
     fun observeListens(): Flow<List<Listen>>
 
+    /** Every listen with the file it came from: what the smart playlists read. */
+    @Query(
+        """
+        SELECT s.media_store_id AS mediaStoreId, s.relative_path AS folderPath, s.display_name AS displayName,
+            p.started_at AS startedAt, p.listened_ms AS listenedMs, p.completed AS completed
+        FROM plays p JOIN songs s ON s.id = p.song_id
+        """,
+    )
+    fun observePlays(): Flow<List<PlayRef>>
+
     /**
      * The song row for [track], found by the same rules playlists use (same ID and file name;
      * same folder and file name; same file name, size and duration), created if new. The row

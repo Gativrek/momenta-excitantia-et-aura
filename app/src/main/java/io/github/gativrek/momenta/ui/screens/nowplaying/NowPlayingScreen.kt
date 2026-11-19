@@ -62,7 +62,9 @@ import io.github.gativrek.momenta.ui.format.formatDuration
 import io.github.gativrek.momenta.ui.screens.moments.FieryTitle
 import io.github.gativrek.momenta.ui.screens.moments.HeavenlyLight
 import io.github.gativrek.momenta.ui.screens.moments.LocalMomentGlow
+import io.github.gativrek.momenta.ui.screens.moments.MomentClipCover
 import io.github.gativrek.momenta.ui.screens.moments.MomentGearSheet
+import io.github.gativrek.momenta.ui.screens.moments.coverClipShowing
 import io.github.gativrek.momenta.ui.screens.moments.formatMomentTime
 import io.github.gativrek.momenta.ui.screens.moments.momentAura
 import io.github.gativrek.momenta.ui.theme.MOMENT_MARK_ALPHA
@@ -192,7 +194,10 @@ fun NowPlayingContent(
     val spark = MaterialTheme.colorScheme.tertiary
 
     // 0 → 1 as a Moment starts, back to 0 as it ends; every reaction follows this one value.
-    val glow by LocalMomentGlow.current
+    val glowState = LocalMomentGlow.current
+    val glow by glowState
+    // A Moment's clip that plays in the cover takes the cover's place while it shows.
+    val coverClip = coverClipShowing()
 
     // Transparent: the theme's backdrop is the Now Playing background, brightened during a Moment.
     Surface(modifier = modifier.fillMaxSize().momentAura(glow, spark), color = Color.Transparent) {
@@ -247,8 +252,10 @@ fun NowPlayingContent(
                             scaleX = scale
                             scaleY = scale
                         },
+                        contentAlignment = Alignment.Center,
                     ) {
                         SwipeCover(
+                            modifier = Modifier.graphicsLayer { alpha = if (coverClip) 1f - glowState.value else 1f },
                             nowPlaying = nowPlaying,
                             size = coverSize,
                             hasNext = state.hasNext,
@@ -260,6 +267,7 @@ fun NowPlayingContent(
                                 onPreviousTrack()
                             },
                         )
+                        MomentClipCover(size = coverSize, glow = glowState)
                     }
                     // The notes float over the bottom of the cover, so they never push the controls off a
                     // short screen.

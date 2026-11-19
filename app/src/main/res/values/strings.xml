@@ -98,6 +98,35 @@
     <string name="playlists_empty_body">Create one here, or use \"Add to playlist\" from any song, album or the queue.</string>
     <string name="playlist_empty">This playlist is empty. Add songs from any list with \"Add to playlist\".</string>
     <string name="playlist_missing">Missing</string>
+    <string name="sort_manual">Manual order</string>
+    <string name="sort_name">Name</string>
+    <string name="sort_artist">Artist</string>
+    <string name="sort_album">Album</string>
+    <string name="sort_date_added">Date added</string>
+    <string name="sort_length">Length</string>
+    <string name="sort_file_size">File size</string>
+    <string name="sort_time_listened">Time listened</string>
+    <string name="sort_times_played">Times played</string>
+    <string name="sort_last_played">Last played</string>
+    <string name="sort_moments">Moments</string>
+    <string name="sort_moments_heard">Moments heard</string>
+    <string name="sort_ascending">Ascending, tap for descending</string>
+    <string name="sort_descending">Descending, tap for ascending</string>
+    <string name="smart_playlists">Kept for you</string>
+    <string name="playlists_yours">Your playlists</string>
+    <string name="smart_on_repeat">On repeat</string>
+    <string name="smart_on_repeat_body">Songs you’ve played at least twice in the last two weeks.</string>
+    <string name="smart_most_played">Most played</string>
+    <string name="smart_most_played_body">Your most heard songs of all time.</string>
+    <string name="smart_recently_added">Recently added</string>
+    <string name="smart_recently_added_body">The newest songs on your phone.</string>
+    <string name="smart_forgotten">Forgotten favourites</string>
+    <string name="smart_forgotten_body">Songs you played a lot that haven’t come up in two months.</string>
+    <string name="smart_never_played">Never played</string>
+    <string name="smart_never_played_body">In your library, not heard yet.</string>
+    <string name="smart_nothing_yet">Nothing yet</string>
+    <string name="smart_empty">Nothing here yet. This fills up as you listen.</string>
+    <string name="smart_save">Save as playlist</string>
     <string name="action_add_to_playlist">Add to playlist</string>
     <string name="action_save_queue">Save queue as playlist</string>
     <!-- %s is the playlist name. -->
@@ -151,6 +180,18 @@
     </plurals>
 
     <!-- Moments: the part of a song that hits -->
+    <string name="moment_clip_label">Clip</string>
+    <string name="moment_clip_none">None</string>
+    <string name="moment_clip_set">Added</string>
+    <string name="moment_clip_hint">A video from your phone, played silently while this Moment hits: in the cover, which takes the clip’s shape, or behind the whole app.</string>
+    <string name="moment_clip_in_cover">In the cover</string>
+    <string name="moment_clip_behind">Behind the app</string>
+    <string name="moment_clip_add">Add a clip</string>
+    <string name="moment_clip_change">Change</string>
+    <string name="moment_clip_remove">Remove</string>
+    <string name="widget_description">What’s playing, with play, skip and the Moment bolt</string>
+    <string name="widget_idle">Nothing playing</string>
+    <string name="widget_nothing_to_save">Play a song first, then save its Moment</string>
     <string name="moment_save">Save this Moment</string>
     <string name="moment_saved">Moment saved</string>
     <string name="moment_save_failed">Couldn\'t save the Moment</string>

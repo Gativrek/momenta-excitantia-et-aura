@@ -3,6 +3,7 @@ package io.github.gativrek.momenta.data.library
 import android.content.ContentResolver
 import android.content.ContentUris
 import android.graphics.Bitmap
+import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
@@ -21,6 +22,7 @@ import coil3.request.Options
 import coil3.size.pxOrElse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okio.Buffer
 import okio.FileSystem
 import okio.buffer
 import okio.source
@@ -39,8 +41,12 @@ fun artworkModel(track: Track): Artwork = Artwork(trackId = track.id, albumId = 
 
 /**
  * Loads [Artwork] the right way for each Android version:
- * - API 29+: `ContentResolver.loadThumbnail` on the track URI. MediaStore extracts the
- *   embedded cover and caches a scaled thumbnail for us.
+ * - API 29+, list-sized: `ContentResolver.loadThumbnail` on the track URI. MediaStore extracts
+ *   the embedded cover and caches a scaled thumbnail for us. That thumbnail is capped at
+ *   about 512×384 whatever size is asked for, so it's only used up to [THUMBNAIL_MAX_PX].
+ * - API 29+, larger (Now Playing, an album's header): the cover embedded in the file itself,
+ *   at full resolution; Coil decodes it down to the size shown. Falls back to the thumbnail
+ *   for a file without one.
  * - API 26–28: the legacy `content://media/external/audio/albumart/{albumId}` URI.
  *
  * Throws when a track has no art; Coil reports that as an error and the UI shows its fallback.
@@ -56,8 +62,17 @@ class ArtworkFetcher(
                 val width = options.size.width.pxOrElse { DEFAULT_SIZE_PX }
                 val height = options.size.height.pxOrElse { DEFAULT_SIZE_PX }
                 val trackUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, data.trackId)
-                val bitmap: Bitmap = resolver.loadThumbnail(trackUri, Size(width, height), null)
-                ImageFetchResult(image = bitmap.asImage(), isSampled = true, dataSource = DataSource.DISK)
+                val embedded = if (maxOf(width, height) > THUMBNAIL_MAX_PX) embeddedPicture(trackUri) else null
+                if (embedded != null) {
+                    SourceFetchResult(
+                        source = ImageSource(Buffer().write(embedded), FileSystem.SYSTEM),
+                        mimeType = null,
+                        dataSource = DataSource.DISK,
+                    )
+                } else {
+                    val bitmap: Bitmap = resolver.loadThumbnail(trackUri, Size(width, height), null)
+                    ImageFetchResult(image = bitmap.asImage(), isSampled = true, dataSource = DataSource.DISK)
+                }
             } else {
                 val uri = ContentUris.withAppendedId(LEGACY_ALBUM_ART_URI, data.albumId)
                 val stream = resolver.openInputStream(uri) ?: throw FileNotFoundException("No album art for $uri")
@@ -67,6 +82,23 @@ class ArtworkFetcher(
                     dataSource = DataSource.DISK,
                 )
             }
+        }
+
+    /** The picture embedded in the audio file's tags, as stored (usually a JPEG or PNG), or null. */
+    private fun embeddedPicture(uri: Uri): ByteArray? =
+        try {
+            resolver.openFileDescriptor(uri, "r")?.use { fd ->
+                MediaMetadataRetriever().run {
+                    try {
+                        setDataSource(fd.fileDescriptor)
+                        embeddedPicture
+                    } finally {
+                        release()
+                    }
+                }
+            }
+        } catch (_: Exception) {
+            null // Unreadable or gone: the thumbnail path reports it properly.
         }
 
     class Factory(
@@ -81,6 +113,9 @@ class ArtworkFetcher(
 
     private companion object {
         const val DEFAULT_SIZE_PX = 512
+
+        /** Above this, MediaStore's cached thumbnail would be stretched: read the file's own cover. */
+        const val THUMBNAIL_MAX_PX = 384
         val LEGACY_ALBUM_ART_URI: Uri = "content://media/external/audio/albumart".toUri()
     }
 }

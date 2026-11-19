@@ -31,13 +31,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.gativrek.momenta.R
 import io.github.gativrek.momenta.data.playlists.PlaylistSummary
+import io.github.gativrek.momenta.data.smart.SmartKind
 import io.github.gativrek.momenta.ui.components.ArtworkImage
 import io.github.gativrek.momenta.ui.components.Loadable
 import io.github.gativrek.momenta.ui.components.LoadingBox
+import io.github.gativrek.momenta.ui.screens.smart.SmartPlaylistRows
 
 @Composable
 fun PlaylistsScreen(
     onPlaylistClick: (Long) -> Unit,
+    onSmartClick: (SmartKind) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: PlaylistsViewModel = viewModel(factory = PlaylistViewModels.Playlists),
 ) {
@@ -48,6 +51,7 @@ fun PlaylistsScreen(
         Loadable.Loading -> LoadingBox(modifier)
         is Loadable.Ready ->
             LazyColumn(modifier = modifier.fillMaxSize()) {
+                item(key = "smart", contentType = "smart") { SmartPlaylistRows(onOpen = onSmartClick) }
                 item(key = "new", contentType = "new") { NewPlaylistRow(onClick = { creating = true }) }
                 if (s.value.isEmpty()) {
                     item(key = "empty", contentType = "empty") { EmptyPlaylists() }

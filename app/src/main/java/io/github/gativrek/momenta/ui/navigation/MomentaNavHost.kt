@@ -10,6 +10,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.navArgument
+import io.github.gativrek.momenta.data.smart.SmartKind
 import io.github.gativrek.momenta.ui.screens.NavArgs
 import io.github.gativrek.momenta.ui.screens.albums.AlbumDetailScreen
 import io.github.gativrek.momenta.ui.screens.albums.AlbumsScreen
@@ -25,6 +26,9 @@ import io.github.gativrek.momenta.ui.screens.playlists.PlaylistDetailScreen
 import io.github.gativrek.momenta.ui.screens.playlists.PlaylistsScreen
 import io.github.gativrek.momenta.ui.screens.queue.QueueScreen
 import io.github.gativrek.momenta.ui.screens.search.SearchScreen
+import io.github.gativrek.momenta.ui.screens.smart.SmartPlaylistScreen
+import io.github.gativrek.momenta.ui.screens.smart.SmartPlaylistsViewModel
+import io.github.gativrek.momenta.ui.screens.smart.UnknownSmartPlaylist
 import io.github.gativrek.momenta.ui.screens.songs.SongsScreen
 
 /** Full-screen player, opened from the mini-player. Not a tab, so the bottom bar hides. */
@@ -124,7 +128,25 @@ fun MomentaNavHost(
         val playlistsTab = TopLevelDestination.Playlists.route
         navigation(route = playlistsTab, startDestination = "$playlistsTab/list") {
             composable("$playlistsTab/list") {
-                PlaylistsScreen(onPlaylistClick = { navController.navigate("$playlistsTab/playlist/$it") })
+                PlaylistsScreen(
+                    onPlaylistClick = { navController.navigate("$playlistsTab/playlist/$it") },
+                    onSmartClick = { navController.navigate("$playlistsTab/smart/${it.key}") },
+                )
+            }
+            composable(
+                route = "$playlistsTab/smart/{${SmartPlaylistsViewModel.KIND}}",
+                arguments = listOf(navArgument(SmartPlaylistsViewModel.KIND) { type = NavType.StringType }),
+            ) { entry ->
+                val kind = SmartKind.fromKey(entry.arguments?.getString(SmartPlaylistsViewModel.KIND))
+                if (kind == null) {
+                    UnknownSmartPlaylist(onBack = { navController.popBackStack() })
+                } else {
+                    SmartPlaylistScreen(
+                        kind = kind,
+                        onBack = { navController.popBackStack() },
+                        onPlayStarted = onPlayStarted,
+                    )
+                }
             }
             composable(
                 route = "$playlistsTab/playlist/{${NavArgs.PLAYLIST_ID}}",

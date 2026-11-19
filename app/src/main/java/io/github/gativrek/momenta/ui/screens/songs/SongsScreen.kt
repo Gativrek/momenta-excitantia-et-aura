@@ -1,7 +1,9 @@
 package io.github.gativrek.momenta.ui.screens.songs
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -9,6 +11,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -17,10 +20,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.gativrek.momenta.R
 import io.github.gativrek.momenta.data.library.Track
+import io.github.gativrek.momenta.data.sorting.SortField
+import io.github.gativrek.momenta.data.sorting.SortOrder
 import io.github.gativrek.momenta.ui.components.LoadingBox
 import io.github.gativrek.momenta.ui.components.PlaceholderScreen
 import io.github.gativrek.momenta.ui.components.PlayShuffleButtons
 import io.github.gativrek.momenta.ui.components.QueueActions
+import io.github.gativrek.momenta.ui.components.SortControl
 import io.github.gativrek.momenta.ui.components.TrackRow
 import io.github.gativrek.momenta.ui.components.introFlyUp
 
@@ -45,6 +51,7 @@ fun SongsScreen(
             viewModel.shuffleAll()
             onPlayStarted()
         },
+        onSortChange = viewModel::setOrder,
         queueActions = viewModel.queueActions,
         modifier = modifier,
     )
@@ -57,6 +64,7 @@ fun SongsContent(
     onTrackClick: (Track) -> Unit,
     onPlayAll: () -> Unit,
     onShuffle: () -> Unit,
+    onSortChange: (SortOrder) -> Unit,
     queueActions: QueueActions,
     modifier: Modifier = Modifier,
 ) {
@@ -74,12 +82,22 @@ fun SongsContent(
             } else {
                 LazyColumn(modifier = modifier.fillMaxSize()) {
                     item(key = "header", contentType = "header") {
-                        Text(
-                            text = pluralStringResource(R.plurals.song_count, state.tracks.size, state.tracks.size),
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.introFlyUp().padding(start = 16.dp, top = 16.dp, bottom = 8.dp),
-                        )
+                        Row(
+                            modifier =
+                                Modifier
+                                    .introFlyUp()
+                                    .fillMaxWidth()
+                                    .padding(start = 16.dp, end = 4.dp, top = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = pluralStringResource(R.plurals.song_count, state.tracks.size, state.tracks.size),
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.weight(1f),
+                            )
+                            SortControl(order = state.order, fields = SortField.forSongs, onChange = onSortChange)
+                        }
                     }
                     item(key = "actions", contentType = "actions") {
                         Box(Modifier.introFlyUp()) { PlayShuffleButtons(onPlayAll = onPlayAll, onShuffle = onShuffle) }

@@ -58,7 +58,7 @@ import kotlin.math.roundToLong
 /**
  * The lightning-gear: everything about the Moments of the playing song, on two pages so
  * neither is crowded. Timing: where the Moment starts and ends, to the tenth of a second.
- * Feel: its name, run-up and volume boost.
+ * Feel: its name, run-up, volume boost and clip.
  *
  * Edits are kept in the sheet and saved when switching Moment, previewing, or closing the
  * sheet, so dragging a slider isn't a database write per frame.
@@ -370,6 +370,13 @@ private fun FeelPage(
         fraction = draft.boostPercent / Moments.MAX_BOOST_PERCENT.toFloat(),
         steps = Moments.MAX_BOOST_PERCENT / 5 - 1,
         onChange = { onChange(draft.copy(boostPercent = (it * Moments.MAX_BOOST_PERCENT).roundToInt())) },
+    )
+    Spacer(Modifier.height(20.dp))
+    ClipSetting(
+        clipUri = draft.clipUri,
+        behind = draft.clipBehind,
+        onChange = { onChange(draft.copy(clipUri = it)) },
+        onBehindChange = { onChange(draft.copy(clipBehind = it)) },
     )
     Spacer(Modifier.height(20.dp))
     // App-wide, so set apart from this Moment's own settings.

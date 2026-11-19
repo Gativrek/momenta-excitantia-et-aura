@@ -73,3 +73,14 @@ data class Listen(
     val startedAt: Long,
     val listenedMs: Long,
 )
+
+/** One listen with the file it was heard from, to tie it to a track in the library now. */
+data class PlayRef(
+    val mediaStoreId: Long,
+    val folderPath: String,
+    val displayName: String,
+    /** Epoch milliseconds. */
+    val startedAt: Long,
+    val listenedMs: Long,
+    val completed: Boolean,
+)

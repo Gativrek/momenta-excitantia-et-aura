@@ -38,6 +38,13 @@ data class MomentEntity(
     /** Times the Moment was heard all the way through. */
     @ColumnInfo(name = "heard_count") val heardCount: Int = 0,
     @ColumnInfo(name = "created_at") val createdAt: Long,
+    /**
+     * A video from the phone (a content URI the app holds a lasting read grant for) that plays
+     * silently behind the app while the Moment hits. Null for none.
+     */
+    @ColumnInfo(name = "clip_uri") val clipUri: String? = null,
+    /** True: the clip plays behind the whole app. False (the default): in place of the cover. */
+    @ColumnInfo(name = "clip_behind", defaultValue = "0") val clipBehind: Boolean = false,
 ) {
     val durationMs: Long get() = endMs - startMs
 

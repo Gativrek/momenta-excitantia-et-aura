@@ -15,12 +15,18 @@ import io.github.gativrek.momenta.data.playlists.PlaylistDetail
 import io.github.gativrek.momenta.data.playlists.PlaylistItem
 import io.github.gativrek.momenta.data.playlists.PlaylistRepository
 import io.github.gativrek.momenta.data.playlists.PlaylistSummary
+import io.github.gativrek.momenta.data.sorting.SortOrder
+import io.github.gativrek.momenta.data.sorting.SortingRepository
+import io.github.gativrek.momenta.data.sorting.TrackSorting
 import io.github.gativrek.momenta.playback.PlayerConnection
 import io.github.gativrek.momenta.ui.components.Loadable
 import io.github.gativrek.momenta.ui.screens.NavArgs
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -44,14 +50,29 @@ class PlaylistsViewModel(
 
 class PlaylistDetailViewModel(
     private val playlists: PlaylistRepository,
+    private val sorting: SortingRepository,
     private val player: PlayerConnection,
     private val playlistId: Long,
 ) : ViewModel() {
+    val order: StateFlow<SortOrder> =
+        sorting
+            .playlistOrder(playlistId)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SortOrder.PLAYLIST_DEFAULT)
+
+    /** The playlist with its entries in the chosen order (missing ones last, except in manual order). */
     val state: StateFlow<Loadable<PlaylistDetail?>> =
-        playlists
-            .playlist(playlistId)
-            .map<PlaylistDetail?, Loadable<PlaylistDetail?>> { Loadable.Ready(it) }
+        combine(playlists.playlist(playlistId), sorting.stats, order) { detail, stats, order ->
+            val sorted =
+                detail?.let {
+                    it.copy(
+                        items = TrackSorting.sort(it.items, order, stats) { item -> item.track },
+                    )
+                }
+            Loadable.Ready(sorted) as Loadable<PlaylistDetail?>
+        }.flowOn(Dispatchers.Default)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), Loadable.Loading)
+
+    fun setOrder(order: SortOrder) = sorting.setPlaylistOrder(playlistId, order)
 
     /** Plays the playlist from [item]; missing entries are skipped. */
     fun play(item: PlaylistItem? = null) {
@@ -134,6 +155,7 @@ object PlaylistViewModels {
             initializer {
                 PlaylistDetailViewModel(
                     container.playlistRepository,
+                    container.sorting,
                     container.playerConnection,
                     requireNotNull(createSavedStateHandle().get<Long>(NavArgs.PLAYLIST_ID)),
                 )

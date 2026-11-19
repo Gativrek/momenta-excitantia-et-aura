@@ -65,7 +65,11 @@ internal object TrackFields {
      * accents sort like a person expects ("árbol" next to "arbol", not after "zebra").
      */
     fun titleComparator(locale: Locale = Locale.getDefault()): Comparator<Track> {
-        val collator = Collator.getInstance(locale).apply { strength = Collator.SECONDARY }
+        val collator = collator(locale)
         return compareBy(collator) { track: Track -> sortKey(track.title) }.thenBy { it.id }
     }
+
+    /** Compares text the way a person reading in [locale] expects: case and accents count little. */
+    fun collator(locale: Locale = Locale.getDefault()): Collator =
+        Collator.getInstance(locale).apply { strength = Collator.SECONDARY }
 }

@@ -13,6 +13,7 @@ import io.github.gativrek.momenta.data.playlists.PlaylistRepository
 import io.github.gativrek.momenta.data.settings.AppearanceStore
 import io.github.gativrek.momenta.data.settings.MomentsSettingsStore
 import io.github.gativrek.momenta.data.settings.ThemePinsStore
+import io.github.gativrek.momenta.data.sorting.SortingRepository
 import io.github.gativrek.momenta.data.tags.TagWriter
 import io.github.gativrek.momenta.playback.PlaybackStateStore
 import io.github.gativrek.momenta.playback.PlayerConnection
@@ -54,6 +55,19 @@ class AppContainer(
             source = mediaStoreSource,
             folderChoices = libraryFolders.choices,
             scope = applicationScope,
+        )
+    }
+
+    /** How Songs and each playlist are sorted, and the numbers the listening sorts use. */
+    val sorting: SortingRepository by lazy {
+        SortingRepository(
+            PreferenceDataStoreFactory.create(scope = applicationScope + Dispatchers.IO) {
+                appContext.preferencesDataStoreFile(SORTING_FILE)
+            },
+            libraryRepository,
+            database.listeningDao(),
+            momentsRepository,
+            applicationScope,
         )
     }
 
@@ -145,6 +159,7 @@ class AppContainer(
         const val MOMENTS_SETTINGS_FILE = "moments_settings"
         const val THEME_PINS_FILE = "theme_pins"
         const val LIBRARY_FOLDERS_FILE = "library_folders"
+        const val SORTING_FILE = "sorting"
 
         /** Backed up like any setting: a theme is worth keeping on a new phone. */
         const val APPEARANCE_FILE = "appearance"

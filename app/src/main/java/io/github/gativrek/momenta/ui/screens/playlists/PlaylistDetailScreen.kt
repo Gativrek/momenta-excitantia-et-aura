@@ -40,6 +40,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.gativrek.momenta.R
 import io.github.gativrek.momenta.data.playlists.PlaylistDetail
 import io.github.gativrek.momenta.data.playlists.PlaylistItem
+import io.github.gativrek.momenta.data.sorting.SortField
+import io.github.gativrek.momenta.data.sorting.SortOrder
 import io.github.gativrek.momenta.ui.components.ArtworkImage
 import io.github.gativrek.momenta.ui.components.DetailTopBar
 import io.github.gativrek.momenta.ui.components.DragHandle
@@ -47,6 +49,7 @@ import io.github.gativrek.momenta.ui.components.Loadable
 import io.github.gativrek.momenta.ui.components.LoadingBox
 import io.github.gativrek.momenta.ui.components.PlayShuffleButtons
 import io.github.gativrek.momenta.ui.components.ReorderState
+import io.github.gativrek.momenta.ui.components.SortControl
 import io.github.gativrek.momenta.ui.components.SwipeToRemove
 import io.github.gativrek.momenta.ui.components.reorderDragged
 import io.github.gativrek.momenta.ui.components.reorderGestures
@@ -60,6 +63,7 @@ fun PlaylistDetailScreen(
     viewModel: PlaylistDetailViewModel = viewModel(factory = PlaylistViewModels.Detail),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val order by viewModel.order.collectAsStateWithLifecycle()
     var renaming by rememberSaveable { mutableStateOf(false) }
     var deleting by rememberSaveable { mutableStateOf(false) }
 
@@ -74,6 +78,8 @@ fun PlaylistDetailScreen(
             }
             PlaylistDetailContent(
                 playlist = playlist,
+                order = order,
+                onSortChange = viewModel::setOrder,
                 onBack = onBack,
                 onPlay = { item ->
                     viewModel.play(item)
@@ -118,6 +124,8 @@ fun PlaylistDetailScreen(
 @Composable
 fun PlaylistDetailContent(
     playlist: PlaylistDetail,
+    order: SortOrder,
+    onSortChange: (SortOrder) -> Unit,
     onBack: () -> Unit,
     onPlay: (PlaylistItem?) -> Unit,
     onShuffle: () -> Unit,
@@ -136,10 +144,11 @@ fun PlaylistDetailContent(
         if (reorder.key == null) items = playlist.items
     }
 
+    val manual = order == SortOrder.PLAYLIST_DEFAULT
     Column(modifier.fillMaxSize()) {
         DetailTopBar(title = playlist.name, onBack = onBack, actions = { PlaylistMenu(onRename, onDelete) })
         LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
-            item(key = "summary", contentType = "summary") { Summary(playlist) }
+            item(key = "summary", contentType = "summary") { Summary(playlist, order, onSortChange) }
             if (playlist.playable.isNotEmpty()) {
                 item(key = "actions", contentType = "actions") {
                     PlayShuffleButtons(onPlayAll = { onPlay(null) }, onShuffle = onShuffle)
@@ -168,7 +177,9 @@ fun PlaylistDetailContent(
                         item = item,
                         elevated = dragging,
                         onClick = { if (item.track != null) onPlay(item) },
+                        // Dragging arranges the manual order, so it is only offered while that order shows.
                         dragHandle = {
+                            if (!manual) return@EntryRow
                             DragHandle(
                                 reorderGestures(
                                     state = reorder,
@@ -189,19 +200,29 @@ fun PlaylistDetailContent(
 }
 
 @Composable
-private fun Summary(playlist: PlaylistDetail) {
+private fun Summary(
+    playlist: PlaylistDetail,
+    order: SortOrder,
+    onSortChange: (SortOrder) -> Unit,
+) {
     val missing = playlist.items.count { it.track == null }
     val parts =
         listOf(
             pluralStringResource(R.plurals.song_count, playlist.items.size, playlist.items.size),
             formatDuration(playlist.durationMs),
         )
-    Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 4.dp)) {
-        Text(
-            text = parts.joinToString(" · "),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+    Column(modifier = Modifier.padding(start = 16.dp, end = 4.dp, top = 4.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = parts.joinToString(" · "),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f),
+            )
+            if (playlist.items.size > 1) {
+                SortControl(order = order, fields = SortField.forPlaylists, onChange = onSortChange)
+            }
+        }
         if (missing > 0) {
             Text(
                 text = pluralStringResource(R.plurals.playlist_missing_count, missing, missing),

@@ -4,9 +4,11 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.lifecycle.ViewModel
@@ -59,6 +61,17 @@ val LocalMomentActions =
  */
 val LocalMomentGlow = staticCompositionLocalOf<State<Float>> { mutableFloatStateOf(0f) }
 
+/** The clip of the Moment playing (or the one just played, while its reaction settles). */
+data class MomentClip(
+    val uri: String?,
+    /** True while inside the Moment; false as the reaction settles. */
+    val playing: Boolean,
+    /** Plays behind the whole app rather than in the cover. */
+    val behind: Boolean = false,
+)
+
+val LocalMomentClip = staticCompositionLocalOf<State<MomentClip>> { mutableStateOf(MomentClip(null, false)) }
+
 class MomentsHostViewModel(
     private val connection: PlayerConnection,
     repository: MomentsRepository,
@@ -67,20 +80,20 @@ class MomentsHostViewModel(
     val byTrack = repository.byTrack
 
     /**
-     * True while the playing song is inside one of its Moments. Polls the position only
-     * while something with Moments is playing and reactions are on (not in Chill mode).
+     * The Moment the playing song is inside, or null. Polls the position only while something
+     * with Moments is playing and reactions are on (not in Chill mode).
      */
     @OptIn(ExperimentalCoroutinesApi::class)
-    val inMoment: Flow<Boolean> =
+    val activeMoment: Flow<MomentEntity?> =
         combine(connection.state, byTrack, settings.settings) { state, byTrack, s ->
             val id = state.nowPlaying?.trackId
             if (s.reactionsActive && state.playWhenReady && id != null) byTrack[id].orEmpty() else emptyList()
         }.distinctUntilChanged()
             .flatMapLatest { moments ->
                 if (moments.isEmpty()) {
-                    flowOf(false)
+                    flowOf(null)
                 } else {
-                    connection.positionUpdates(POSITION_MS).map { pos -> moments.any { pos in it } }
+                    connection.positionUpdates(POSITION_MS).map { pos -> moments.firstOrNull { pos in it } }
                 }
             }.distinctUntilChanged()
 
@@ -117,7 +130,16 @@ class MomentsHostViewModel(
 fun MomentsHost(content: @Composable () -> Unit) {
     val viewModel: MomentsHostViewModel = viewModel(factory = MomentsHostViewModel.Factory)
     val byTrack by viewModel.byTrack.collectAsStateWithLifecycle()
-    val inMoment by viewModel.inMoment.collectAsStateWithLifecycle(initialValue = false)
+    val active by viewModel.activeMoment.collectAsStateWithLifecycle(initialValue = null)
+    val inMoment = active != null
+    // The clip stays named while the reaction settles, so it fades out instead of vanishing.
+    val clip = remember { mutableStateOf(MomentClip(uri = null, playing = false)) }
+    val activeClip = active?.clipUri
+    val behind = active?.clipBehind == true
+    LaunchedEffect(inMoment, activeClip, behind) {
+        clip.value =
+            if (inMoment) MomentClip(activeClip, playing = true, behind = behind) else clip.value.copy(playing = false)
+    }
     val glow =
         animateFloatAsState(
             targetValue = if (inMoment) 1f else 0f,
@@ -140,6 +162,7 @@ fun MomentsHost(content: @Composable () -> Unit) {
     CompositionLocalProvider(
         LocalMomentActions provides actions,
         LocalMomentGlow provides glow,
+        LocalMomentClip provides clip,
         content = content,
     )
 }

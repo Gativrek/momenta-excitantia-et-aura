@@ -19,6 +19,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.gativrek.momenta.ui.MomentaApp
 import io.github.gativrek.momenta.ui.components.StartupIntro
 import io.github.gativrek.momenta.ui.screens.moments.LocalMomentGlow
+import io.github.gativrek.momenta.ui.screens.moments.MomentClipBackdrop
 import io.github.gativrek.momenta.ui.screens.moments.MomentsHost
 import io.github.gativrek.momenta.ui.screens.permission.PermissionGate
 import io.github.gativrek.momenta.ui.screens.tags.TagEditorHost
@@ -82,6 +83,8 @@ class MainActivity : ComponentActivity() {
                         // It lights up during a Moment, whichever screen is open.
                         val glow = LocalMomentGlow.current
                         ThemeBackdrop(spec, Modifier.fillMaxSize(), glow = { glow.value })
+                        // A Moment's own clip, if it has one, plays over the backdrop while it hits.
+                        MomentClipBackdrop(Modifier.fillMaxSize())
                         // On launch the app sweeps in from the bottom up, over the backdrop.
                         StartupIntro(launchLogo = launchLogo, hasLaunchScreen = hasLaunchScreen) {
                             // Every tab reads the music library, so the whole app sits behind the permission.

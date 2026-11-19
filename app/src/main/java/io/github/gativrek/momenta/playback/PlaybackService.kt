@@ -4,6 +4,7 @@ import android.app.PendingIntent
 import android.content.ContentUris
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.os.Bundle
 import android.os.SystemClock
 import android.provider.MediaStore
@@ -38,6 +39,9 @@ import io.github.gativrek.momenta.R
 import io.github.gativrek.momenta.data.library.Track
 import io.github.gativrek.momenta.data.listening.PlayEntity
 import io.github.gativrek.momenta.data.moments.MomentSuggestion
+import io.github.gativrek.momenta.widget.NowPlayingWidgets
+import io.github.gativrek.momenta.widget.WidgetBridge
+import io.github.gativrek.momenta.widget.WidgetState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -47,6 +51,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.random.Random
 
 /**
@@ -78,6 +83,10 @@ class PlaybackService : MediaSessionService() {
     /** The library as last seen, to name what was listened to. */
     private var library: Map<Long, Track> = emptyMap()
     private val replays = ReplayDetector()
+
+    /** The home-screen widget's cover, for the track it was loaded for. */
+    private var widgetCover: Pair<Long?, Bitmap?>? = null
+    private var widgetJob: Job? = null
 
     /** The Moment volume boost, in the audio pipeline (see MomentGainProcessor). */
     private val momentGain = MomentGainProcessor()
@@ -181,6 +190,9 @@ class PlaybackService : MediaSessionService() {
         restoreQueue()
         followLibrary()
         followMoments()
+        WidgetBridge.refresh = ::updateWidget
+        WidgetBridge.saveMoment = ::saveMomentFromWidget
+        updateWidget()
     }
 
     /** Every controller (our UI, System UI, Bluetooth) gets the same session. */
@@ -201,6 +213,11 @@ class PlaybackService : MediaSessionService() {
     }
 
     override fun onDestroy() {
+        WidgetBridge.refresh = null
+        WidgetBridge.saveMoment = null
+        if (NowPlayingWidgets.hasAny(this)) {
+            NowPlayingWidgets.push(this, widgetState().copy(playing = false), widgetCover?.second)
+        }
         playTracker.flush()
         saveQueue()
         sleepTimer.cancel()
@@ -292,6 +309,58 @@ class PlaybackService : MediaSessionService() {
             }
         }
         return result
+    }
+
+    private fun widgetState(): WidgetState {
+        val item = player.currentMediaItem
+        return WidgetState(
+            title = item?.mediaMetadata?.title?.toString(),
+            artist = item?.mediaMetadata?.artist?.toString(),
+            playing = item != null && player.playWhenReady && player.playbackState != Player.STATE_ENDED,
+        )
+    }
+
+    /** Shows the current song and play state on the home-screen widgets, if there are any. */
+    private fun updateWidget() {
+        if (!NowPlayingWidgets.hasAny(this)) return
+        val item = player.currentMediaItem
+        val state = widgetState()
+        val trackId = item?.let(MediaItemMapper::trackId)
+        val cached = widgetCover
+        if (cached != null && cached.first == trackId) {
+            NowPlayingWidgets.push(this, state, cached.second)
+            return
+        }
+        widgetJob?.cancel()
+        widgetJob =
+            scope.launch {
+                val art = item?.let(MediaItemMapper::artwork)
+                val cover =
+                    art?.let {
+                        withContext(Dispatchers.IO) {
+                            NowPlayingWidgets.loadCover(this@PlaybackService, it.trackId, it.albumId)
+                        }
+                    }
+                widgetCover = trackId to cover
+                NowPlayingWidgets.push(this@PlaybackService, widgetState(), cover)
+            }
+    }
+
+    /** The widget's bolt: like the notification's, with a toast to say what happened. */
+    private fun saveMomentFromWidget() {
+        if (player.currentMediaItem == null) {
+            Toast.makeText(this, R.string.widget_nothing_to_save, Toast.LENGTH_SHORT).show()
+            return
+        }
+        val saving = saveMoment()
+        saving.addListener(
+            {
+                val id = runCatching { saving.get() }.getOrNull()
+                val message = if (id != null) R.string.moment_saved else R.string.moment_save_failed
+                Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+            },
+            ContextCompat.getMainExecutor(this),
+        )
     }
 
     /** Into the listening log. Application scope: a listen flushed in onDestroy is still written. */
@@ -450,6 +519,7 @@ class PlaybackService : MediaSessionService() {
         ) {
             sleepTimer.onPlayerChanged()
             if (events.containsAny(*SAVE_EVENTS)) saveQueue()
+            if (events.containsAny(*WIDGET_EVENTS)) updateWidget()
             if (events.contains(Player.EVENT_IS_PLAYING_CHANGED)) {
                 periodicSave?.cancel()
                 periodicSave =
@@ -584,6 +654,15 @@ class PlaybackService : MediaSessionService() {
         const val SAVE_INTERVAL_MS = 10_000L
 
         /** Changes worth saving right away. Position while playing is covered by the 10 s save. */
+        val WIDGET_EVENTS =
+            intArrayOf(
+                Player.EVENT_MEDIA_ITEM_TRANSITION,
+                Player.EVENT_MEDIA_METADATA_CHANGED,
+                Player.EVENT_PLAY_WHEN_READY_CHANGED,
+                Player.EVENT_PLAYBACK_STATE_CHANGED,
+                Player.EVENT_TIMELINE_CHANGED,
+            )
+
         val SAVE_EVENTS =
             intArrayOf(
                 Player.EVENT_TIMELINE_CHANGED,
