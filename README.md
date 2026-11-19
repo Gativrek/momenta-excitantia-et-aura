@@ -10,6 +10,7 @@ No streaming, no accounts, no network permission. It finds the music on your dev
 
 - **Local library:** reads audio from the device's MediaStore (MP3, FLAC, M4A/AAC, OGG/Opus, WAV)
 - **Browse** by song, album, artist and folder
+- **Sorting:** order songs and playlists by name, artist, album, date added, length, file size, time listened, times played, last played, Moments or Moments heard, either way round. Each list remembers its own order
 - **Library folders:** choose which folders count as music. Messaging apps (WhatsApp, Telegram and the like), voice recorders and ringtones start out left out
 - **Search** across songs, albums and artists (ignores case and accents)
 - **Background playback** through a foreground media service, with lock-screen and notification controls
@@ -17,9 +18,12 @@ No streaming, no accounts, no network permission. It finds the music on your dev
 - **Audio focus:** pauses for calls and other apps, ducks for navigation prompts
 - **Pauses when headphones are unplugged** or Bluetooth disconnects
 - **Playlists:** create, rename, reorder and delete
+- **Smart playlists,** kept up to date from what you listen to: On repeat, Most played, Recently added, Forgotten favourites and Never played. Save any of them as a normal playlist
 - **Queue:** shuffle, repeat (off/all/one), reorder and remove upcoming tracks
 - **A proper entrance:** the logo glides from the launch screen to its place beside the tab name while your songs fly up into the list
 - **A cover that follows the queue:** on Now Playing the cover slides out as the next song slides in (and back the other way). Drag it right to left to skip, left to right to go back
+- **Sharp covers:** large covers are read straight from the picture embedded in the file, at full size
+- **Home-screen widget:** the cover, the song, previous, play/pause, next and the Moment bolt, and it starts playback even with the app closed
 - **Gapless playback**
 - **Sleep timer**
 - **Restores your queue and position** after the app is killed or the phone reboots
@@ -27,6 +31,7 @@ No streaming, no accounts, no network permission. It finds the music on your dev
 - **Tag editing:** fix a song's title, artist, album or album artist, or rename a whole album at once. Changes are written into the files (MP3, FLAC, M4A, OGG/Opus), so other apps and your PC see them too
 - **Moments:** tap the bolt when a song hits and Momenta saves that part. Fine-tune each Moment to the tenth of a second, give it a name and a run-up, and an optional volume boost of up to +50%. While a Moment plays the cover rises into a heavenly light, the title catches fire and the theme's pattern lights up. Jump straight to a song's Moment from any list. Chill mode turns it all off for studying
 - **Your Moments and the reel:** every Moment in one list, and a reel that plays only the Moments, one after another, fading from each to the next. Replay the same part twice and Momenta offers to make it a Moment
+- **Moment clips:** give a Moment a video from your phone and it plays silently while the Moment hits, in the cover (which takes the clip's shape, wide or tall) or behind the whole app
 - **Album themes:** pin a theme to an album and the whole app wears it while that album plays
 - **Liner notes:** a private note on a song or album, shown softly on Now Playing
 - **Listening history,** kept on the phone and nowhere else
@@ -41,7 +46,7 @@ No streaming, no accounts, no network permission. It finds the music on your dev
 | Navigation | Navigation Compose |
 | Playback | Jetpack Media3 (ExoPlayer + MediaSessionService) |
 | Library source | Android MediaStore |
-| Persistence | Room (playlists), DataStore (settings and playback state) |
+| Persistence | Room (playlists, listening history, Moments), DataStore (settings, sort orders and playback state) |
 | Async | Kotlin Coroutines + Flow |
 | Images | Coil 3 (core only, no network module) |
 | DI | Manual (constructor injection via an `AppContainer`) |
