@@ -1,5 +1,6 @@
 package io.github.gativrek.momenta.ui.screens.albums
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -31,6 +32,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import io.github.gativrek.momenta.App
 import io.github.gativrek.momenta.R
 import io.github.gativrek.momenta.data.library.Album
+import io.github.gativrek.momenta.data.library.Track
 import io.github.gativrek.momenta.data.settings.AppearanceStore
 import io.github.gativrek.momenta.data.settings.ThemePinsStore
 import io.github.gativrek.momenta.ui.theme.ThemePreset
@@ -41,12 +43,18 @@ class ThemePinViewModel(
     appearance: AppearanceStore,
 ) : ViewModel() {
     val allPins = pins.pins
+    val songPins = pins.songPins
     val ownTheme = appearance.theme
 
     fun pin(
         album: Album,
         spec: ThemeSpec?,
     ) = pins.pin(album, spec)
+
+    fun pinSong(
+        track: Track,
+        spec: ThemeSpec?,
+    ) = pins.pinSong(track, spec)
 
     companion object {
         val Factory =
@@ -71,21 +79,63 @@ fun ThemePinDialog(
 ) {
     val pins by viewModel.allPins.collectAsStateWithLifecycle()
     val own by viewModel.ownTheme.collectAsStateWithLifecycle()
-    val current = ThemePinsStore.keysOf(album).firstNotNullOfOrNull { pins[it] }
+    PinDialog(
+        title = R.string.pin_theme_title,
+        body = R.string.pin_theme_body,
+        current = ThemePinsStore.keysOf(album).firstNotNullOfOrNull { pins[it] },
+        own = own,
+        onChoose = { spec ->
+            viewModel.pin(album, spec)
+            onDismiss()
+        },
+        onDismiss = onDismiss,
+    )
+}
 
-    fun choose(spec: ThemeSpec?) {
-        viewModel.pin(album, spec)
-        onDismiss()
-    }
+/**
+ * Pick the theme the app wears while this one song plays. It wins over a theme pinned to the
+ * song's album.
+ */
+@Composable
+fun SongThemePinDialog(
+    track: Track,
+    onDismiss: () -> Unit,
+    viewModel: ThemePinViewModel = viewModel(factory = ThemePinViewModel.Factory),
+) {
+    val pins by viewModel.songPins.collectAsStateWithLifecycle()
+    val own by viewModel.ownTheme.collectAsStateWithLifecycle()
+    PinDialog(
+        title = R.string.pin_song_theme_title,
+        body = R.string.pin_song_theme_body,
+        current = pins[ThemePinsStore.songKeyOf(track)],
+        own = own,
+        onChoose = { spec ->
+            viewModel.pinSong(track, spec)
+            onDismiss()
+        },
+        onDismiss = onDismiss,
+    )
+}
+
+@Composable
+private fun PinDialog(
+    @StringRes title: Int,
+    @StringRes body: Int,
+    current: ThemeSpec?,
+    own: ThemeSpec?,
+    onChoose: (ThemeSpec?) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    fun choose(spec: ThemeSpec?) = onChoose(spec)
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.pin_theme_title)) },
+        title = { Text(stringResource(title)) },
         text = {
             LazyColumn {
                 item {
                     Text(
-                        text = stringResource(R.string.pin_theme_body),
+                        text = stringResource(body),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 8.dp),

@@ -143,6 +143,9 @@
     <string name="tags_edit_album">Edit album</string>
     <string name="pin_theme_title">Album theme</string>
     <string name="pin_theme_body">While a song from this album plays, the whole app wears this theme. It goes back to yours after.</string>
+    <string name="pin_song_theme_title">Song theme</string>
+    <string name="pin_song_theme_body">While this song plays, the whole app wears this theme, even over its album’s. It goes back to yours after.</string>
+    <string name="action_song_theme">Song theme</string>
     <string name="pin_theme_none">None: use my theme</string>
     <string name="pin_theme_own">My theme, as it is now</string>
     <string name="action_close">Close</string>

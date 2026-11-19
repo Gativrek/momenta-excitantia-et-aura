@@ -20,6 +20,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import io.github.gativrek.momenta.R
 import io.github.gativrek.momenta.data.library.Track
+import io.github.gativrek.momenta.ui.screens.albums.SongThemePinDialog
 import io.github.gativrek.momenta.ui.screens.moments.LocalMomentActions
 import io.github.gativrek.momenta.ui.screens.moments.formatMomentTime
 import io.github.gativrek.momenta.ui.screens.notes.SongNoteDialog
@@ -33,7 +34,7 @@ class QueueActions(
     val addToQueue: (Track) -> Unit,
 )
 
-/** Three-dot button with "Jump to the Moment" (songs with one), "Play next", "Add to queue", "Add to playlist" and "Edit tags". */
+/** Three-dot button with "Jump to the Moment" (songs with one), "Play next", "Add to queue", "Add to playlist", "Liner note", "Song theme" and "Edit tags". */
 @Composable
 fun TrackMenuButton(
     track: Track,
@@ -44,6 +45,7 @@ fun TrackMenuButton(
     var editingTags by remember { mutableStateOf(false) }
     var choosingMoment by remember { mutableStateOf(false) }
     var writingNote by remember { mutableStateOf(false) }
+    var pinningTheme by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val moments = LocalMomentActions.current
     Box {
@@ -79,6 +81,10 @@ fun TrackMenuButton(
             MenuItem(R.string.action_liner_note, R.drawable.ic_note) {
                 open = false
                 writingNote = true
+            }
+            MenuItem(R.string.action_song_theme, R.drawable.ic_palette) {
+                open = false
+                pinningTheme = true
             }
             MenuItem(R.string.action_edit_tags, R.drawable.ic_edit) {
                 open = false
@@ -118,6 +124,9 @@ fun TrackMenuButton(
     }
     if (writingNote) {
         SongNoteDialog(track = track, onDismiss = { writingNote = false })
+    }
+    if (pinningTheme) {
+        SongThemePinDialog(track = track, onDismiss = { pinningTheme = false })
     }
 }
 

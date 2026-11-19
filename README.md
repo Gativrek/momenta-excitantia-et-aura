@@ -4,9 +4,9 @@
 
 No streaming, no accounts, no network permission. It finds the music on your device and plays it reliably: in the background, with the screen off, over Bluetooth, and it gets out of the way when something else needs the speaker.
 
-> **Status:** in development toward v1.0. Playback, library, playlists, themes and tag editing are done; the real-device checklist is next.
+> **Status:** v1.0.0. Every v1 feature is in and the real-device checklist passed on a Galaxy A54. Download the APK from [Releases](https://github.com/Gativrek/momenta-excitantia-et-aura/releases).
 
-## Features (v1 target)
+## Features
 
 - **Local library:** reads audio from the device's MediaStore (MP3, FLAC, M4A/AAC, OGG/Opus, WAV)
 - **Browse** by song, album, artist and folder
@@ -32,10 +32,10 @@ No streaming, no accounts, no network permission. It finds the music on your dev
 - **Moments:** tap the bolt when a song hits and Momenta saves that part. Fine-tune each Moment to the tenth of a second, give it a name and a run-up, and an optional volume boost of up to +50%. While a Moment plays the cover rises into a heavenly light, the title catches fire and the theme's pattern lights up. Jump straight to a song's Moment from any list. Chill mode turns it all off for studying
 - **Your Moments and the reel:** every Moment in one list, and a reel that plays only the Moments, one after another, fading from each to the next. Replay the same part twice and Momenta offers to make it a Moment
 - **Moment clips:** give a Moment a video from your phone and it plays silently while the Moment hits, in the cover (which takes the clip's shape, wide or tall) or behind the whole app
-- **Album themes:** pin a theme to an album and the whole app wears it while that album plays
+- **Album and song themes:** pin a theme to an album, or to a single song, and the whole app wears it while that plays. A song's own theme wins over its album's
 - **Liner notes:** a private note on a song or album, shown softly on Now Playing
 - **Listening history,** kept on the phone and nowhere else
-- **Your Aura:** what your listening says about you, worked out on the phone: the era you're in (the album that took over your month), time in hype inside your Moments, your most played songs and artists, past eras, and what played on this day in earlier years. Share it as a card drawn in your own theme, through the share sheet, with no internet involved
+- **Your Aura:** what your listening says about you, worked out on the phone: the era you're in (the album that took over your month), time in hype inside your Moments, your most played songs and artists, past eras, and what played on this day in earlier years. Share it as a full-HD card drawn in your own theme, through the share sheet, with no internet involved
 
 ## Tech stack
 

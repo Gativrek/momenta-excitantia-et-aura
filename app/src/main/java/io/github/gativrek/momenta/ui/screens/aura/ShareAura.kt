@@ -28,8 +28,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.asAndroidBitmap
-import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -37,6 +38,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import io.github.gativrek.momenta.R
@@ -49,6 +51,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import kotlin.math.roundToInt
 
 /**
  * The share card, previewed as it will look, and a Share button that hands it to the share
@@ -68,11 +71,17 @@ fun ShareAuraDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         text = {
-            // Recorded into a layer while it draws, so the exact pixels on screen are what's shared.
+            // Drawn on screen as usual and recorded a second time into a layer, scaled up to
+            // SHARE_WIDTH_PX: the same draw calls replayed larger, so text and patterns stay
+            // sharp instead of being stretched from the small preview.
             Box(
                 Modifier.drawWithContent {
-                    layer.record { this@drawWithContent.drawContent() }
-                    drawLayer(layer)
+                    drawContent()
+                    if (size.width <= 0f) return@drawWithContent
+                    val factor = SHARE_WIDTH_PX / size.width
+                    layer.record(size = IntSize(SHARE_WIDTH_PX, (size.height * factor).roundToInt())) {
+                        scale(factor, pivot = Offset.Zero) { this@drawWithContent.drawContent() }
+                    }
                 },
             ) { AuraCard(profile, hypeMs, topMoment) }
         },
@@ -230,5 +239,8 @@ private suspend fun shareImage(
 /** Width to height: a phone-story shape, so it fits a status or a story as it is. */
 private const val CARD_RATIO = 0.6f
 private const val CARD_SONGS = 3
+
+/** Width of the shared picture in pixels, whatever the preview's size: a full-HD story. */
+private const val SHARE_WIDTH_PX = 1080
 private const val SHARE_DIR = "shared"
 private const val SHARE_FILE = "my-aura.png"

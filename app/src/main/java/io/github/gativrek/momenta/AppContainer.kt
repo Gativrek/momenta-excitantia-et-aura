@@ -141,15 +141,18 @@ class AppContainer(
         )
     }
 
-    /** The theme pinned to the playing song's album, if any: the app wears it while that song is on. */
+    /** The theme pinned to the playing song, else to its album: the app wears it while that song is on. */
     val pinnedTheme: StateFlow<ThemeSpec?> by lazy {
         combine(
             playerConnection.state.map { it.nowPlaying?.trackId }.distinctUntilChanged(),
             libraryRepository.tracks,
             themePins.pins,
-        ) { trackId, tracks, pins ->
-            if (trackId == null || pins.isEmpty()) return@combine null
-            tracks.firstOrNull { it.id == trackId }?.let { pins[ThemePinsStore.keyOf(it)] }
+            themePins.songPins,
+        ) { trackId, tracks, pins, songPins ->
+            if (trackId == null || (pins.isEmpty() && songPins.isEmpty())) return@combine null
+            tracks.firstOrNull { it.id == trackId }?.let {
+                songPins[ThemePinsStore.songKeyOf(it)] ?: pins[ThemePinsStore.keyOf(it)]
+            }
         }.stateIn(applicationScope, SharingStarted.Eagerly, null)
     }
 
