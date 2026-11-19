@@ -112,18 +112,15 @@
     <string name="sort_moments_heard">Moments heard</string>
     <string name="sort_ascending">Ascending, tap for descending</string>
     <string name="sort_descending">Descending, tap for ascending</string>
-    <string name="smart_playlists">Kept for you</string>
+    <string name="smart_playlists">From your listening</string>
     <string name="playlists_yours">Your playlists</string>
     <string name="smart_on_repeat">On repeat</string>
     <string name="smart_on_repeat_body">Songs you’ve played at least twice in the last two weeks.</string>
     <string name="smart_most_played">Most played</string>
-    <string name="smart_most_played_body">Your most heard songs of all time.</string>
     <string name="smart_recently_added">Recently added</string>
-    <string name="smart_recently_added_body">The newest songs on your phone.</string>
     <string name="smart_forgotten">Forgotten favourites</string>
     <string name="smart_forgotten_body">Songs you played a lot that haven’t come up in two months.</string>
     <string name="smart_never_played">Never played</string>
-    <string name="smart_never_played_body">In your library, not heard yet.</string>
     <string name="smart_nothing_yet">Nothing yet</string>
     <string name="smart_empty">Nothing here yet. This fills up as you listen.</string>
     <string name="smart_save">Save as playlist</string>
@@ -158,7 +155,7 @@
     <string name="library_folders_body">Choose which folders are part of your library. Messaging apps, recorders and system sounds start out switched off.</string>
     <string name="action_liner_note">Liner note</string>
     <string name="note_add">Add a liner note</string>
-    <string name="note_hint">Just for you: a memory, where you first heard it, why it matters. Shown softly while it plays.</string>
+    <string name="note_hint">Shown while this song plays.</string>
     <string name="note_placeholder">The summer this was on repeat</string>
     <string name="note_save">Save</string>
     <string name="tag_title">Title</string>
@@ -186,7 +183,7 @@
     <string name="moment_clip_label">Clip</string>
     <string name="moment_clip_none">None</string>
     <string name="moment_clip_set">Added</string>
-    <string name="moment_clip_hint">A video from your phone, played silently while this Moment hits: in the cover, which takes the clip’s shape, or behind the whole app.</string>
+    <string name="moment_clip_hint">A video from your phone, played silently while this Moment hits.</string>
     <string name="moment_clip_in_cover">In the cover</string>
     <string name="moment_clip_behind">Behind the app</string>
     <string name="moment_clip_add">Add a clip</string>
@@ -225,7 +222,7 @@
     <string name="moment_delete">Delete</string>
     <string name="moment_page_timing">Timing</string>
     <string name="moment_page_feel">Feel</string>
-    <string name="moment_length">%s long. Tap Start or End to fine-tune it.</string>
+    <string name="moment_length">%s long</string>
     <string name="moment_run_up_label">Run-up</string>
     <string name="moment_boost_label">Volume boost</string>
     <string name="moment_boost_none">Off</string>
@@ -269,7 +266,7 @@
         <item quantity="other">my top Moment · heard %d times</item>
     </plurals>
     <string name="moments_play_reel">Play the reel</string>
-    <string name="moments_reel_hint">Only the Moments, one after another with their run-ups, fading from one to the next</string>
+    <string name="moments_reel_hint">Every Moment in a row, each with its run-up.</string>
     <string name="moments_empty_title">No Moments yet</string>
     <string name="moments_empty_body">When a song hits, tap the bolt on Now Playing. The part that got you is saved here.</string>
     <plurals name="moments_heard_short">
@@ -292,7 +289,7 @@
     <string name="search_placeholder">Songs, albums, artists</string>
     <string name="search_clear">Clear search</string>
     <string name="search_hint_title">Search your library</string>
-    <string name="search_hint_body">Type part of a title, artist or album. Accents and capitals don\'t matter.</string>
+    <string name="search_hint_body">Accents and capitals don\'t matter.</string>
     <string name="search_no_results_title">No results</string>
     <!-- %s is what the user typed. -->
     <string name="search_no_results_body">Nothing matches \"%s\".</string>
@@ -322,13 +319,11 @@
     <string name="sample_artist">Momenta Excitantia et Aura</string>
 
     <string name="color_background">Background</string>
-    <string name="color_background_desc">What every screen sits on</string>
     <string name="color_accent">Accent</string>
     <string name="color_accent_desc">Buttons, sliders, the playing track, the aura</string>
     <string name="color_spark">Spark</string>
     <string name="color_spark_desc">A second accent and the lower glow</string>
     <string name="color_pattern">Pattern</string>
-    <string name="color_pattern_desc">The color the pattern is drawn in</string>
     <string name="color_hue">Hue</string>
     <string name="color_saturation">Saturation</string>
     <string name="color_brightness">Brightness</string>

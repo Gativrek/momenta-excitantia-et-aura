@@ -63,11 +63,11 @@ import io.github.gativrek.momenta.ui.theme.themeBackdrop
 /** Which of the four theme colors is being edited. */
 private enum class ColorSlot(
     val labelRes: Int,
-    val descriptionRes: Int,
+    val descriptionRes: Int?,
     val get: (ThemeSpec) -> Color,
     val set: (ThemeSpec, Color) -> ThemeSpec,
 ) {
-    Background(R.string.color_background, R.string.color_background_desc, { it.background }, {
+    Background(R.string.color_background, null, { it.background }, {
         s,
         c,
         ->
@@ -75,7 +75,7 @@ private enum class ColorSlot(
     }),
     Accent(R.string.color_accent, R.string.color_accent_desc, { it.accent }, { s, c -> s.copy(accent = c) }),
     Spark(R.string.color_spark, R.string.color_spark_desc, { it.spark }, { s, c -> s.copy(spark = c) }),
-    PatternInk(R.string.color_pattern, R.string.color_pattern_desc, { it.patternColor }, {
+    PatternInk(R.string.color_pattern, null, { it.patternColor }, {
         s,
         c,
         ->
@@ -144,7 +144,7 @@ fun AppearanceScreen(
             items(ColorSlot.entries) { slot ->
                 ColorRow(
                     label = stringResource(slot.labelRes),
-                    description = stringResource(slot.descriptionRes),
+                    description = slot.descriptionRes?.let { stringResource(it) },
                     color = slot.get(spec),
                     onClick = { editing = slot },
                 )

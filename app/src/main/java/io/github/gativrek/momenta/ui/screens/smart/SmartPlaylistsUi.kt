@@ -46,6 +46,7 @@ import io.github.gativrek.momenta.data.smart.SmartKind
 import io.github.gativrek.momenta.data.smart.SmartPlaylist
 import io.github.gativrek.momenta.data.smart.SmartPlaylists
 import io.github.gativrek.momenta.playback.PlayerConnection
+import io.github.gativrek.momenta.ui.components.ArtworkImage
 import io.github.gativrek.momenta.ui.components.DetailTopBar
 import io.github.gativrek.momenta.ui.components.Loadable
 import io.github.gativrek.momenta.ui.components.LoadingBox
@@ -110,15 +111,14 @@ private val SmartKind.title: Int
             SmartKind.NEVER_PLAYED -> R.string.smart_never_played
         }
 
+/** Only for the lists whose name can't say what's in them (the time windows); the rest are self-explanatory. */
 @get:StringRes
-private val SmartKind.description: Int
+private val SmartKind.description: Int?
     get() =
         when (this) {
             SmartKind.ON_REPEAT -> R.string.smart_on_repeat_body
-            SmartKind.MOST_PLAYED -> R.string.smart_most_played_body
-            SmartKind.RECENTLY_ADDED -> R.string.smart_recently_added_body
             SmartKind.FORGOTTEN -> R.string.smart_forgotten_body
-            SmartKind.NEVER_PLAYED -> R.string.smart_never_played_body
+            SmartKind.MOST_PLAYED, SmartKind.RECENTLY_ADDED, SmartKind.NEVER_PLAYED -> null
         }
 
 @get:DrawableRes
@@ -168,19 +168,24 @@ private fun SmartRow(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            modifier =
-                Modifier
-                    .size(56.dp)
-                    .clip(MaterialTheme.shapes.small)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painterResource(list.kind.icon),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-            )
+        val cover = list.tracks.firstOrNull()
+        if (cover != null) {
+            ArtworkImage(track = cover, size = 56.dp)
+        } else {
+            Box(
+                modifier =
+                    Modifier
+                        .size(56.dp)
+                        .clip(MaterialTheme.shapes.small)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    painterResource(list.kind.icon),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+            }
         }
         Column(modifier = Modifier.weight(1f).padding(start = 16.dp)) {
             Text(stringResource(list.kind.title), style = MaterialTheme.typography.bodyLarge)
@@ -230,13 +235,15 @@ fun SmartPlaylistScreen(
             return@Column
         }
         LazyColumn(modifier = Modifier.fillMaxSize()) {
-            item(key = "about", contentType = "about") {
-                Text(
-                    text = stringResource(kind.description),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                )
+            kind.description?.let { description ->
+                item(key = "about", contentType = "about") {
+                    Text(
+                        text = stringResource(description),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    )
+                }
             }
             if (tracks.isEmpty()) {
                 item(key = "empty", contentType = "empty") {

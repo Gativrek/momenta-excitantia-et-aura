@@ -225,7 +225,7 @@ private fun GradientSlider(
 @Composable
 internal fun ColorRow(
     label: String,
-    description: String,
+    description: String?,
     color: Color,
     onClick: () -> Unit,
 ) {
@@ -243,11 +243,13 @@ internal fun ColorRow(
         )
         Column(modifier = Modifier.weight(1f).padding(horizontal = 16.dp)) {
             Text(label, style = MaterialTheme.typography.bodyLarge)
-            Text(
-                description,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            if (description != null) {
+                Text(
+                    description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
         Text(
             color.hex(),
