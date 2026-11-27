@@ -4,7 +4,7 @@
 
 No streaming, no accounts, no network permission. It finds the music on your device and plays it reliably: in the background, with the screen off, over Bluetooth, and it gets out of the way when something else needs the speaker.
 
-> **Status:** v1.0.0. Every v1 feature is in and the real-device checklist passed on a Galaxy A54. Download the APK from [Releases](https://github.com/Gativrek/momenta-excitantia-et-aura/releases).
+> **Status:** v1.1.0. Every v1 feature is in and the real-device checklist passed on a Galaxy A54; v1.1 adds Aura ranks, Encore, queue history and a weighted shuffle. Download the APK from [Releases](https://github.com/Gativrek/momenta-excitantia-et-aura/releases).
 
 ## Features
 
@@ -19,7 +19,9 @@ No streaming, no accounts, no network permission. It finds the music on your dev
 - **Pauses when headphones are unplugged** or Bluetooth disconnects
 - **Playlists:** create, rename, reorder and delete
 - **Smart playlists,** kept up to date from what you listen to: On repeat, Most played, Recently added, Forgotten favourites and Never played. Save any of them as a normal playlist
-- **Queue:** shuffle, repeat (off/all/one), reorder and remove upcoming tracks
+- **Queue:** shuffle, repeat (off/all/one), reorder and remove upcoming tracks, and scroll up to see what already played
+- **Shuffle that remembers:** songs you haven't heard in a while tend to come up first, while every song still plays once
+- **Encore:** one tap next to the bolt and the song plays once more before the queue moves on
 - **A proper entrance:** the logo glides from the launch screen to its place beside the tab name while your songs fly up into the list
 - **A cover that follows the queue:** on Now Playing the cover slides out as the next song slides in (and back the other way). Drag it right to left to skip, left to right to go back
 - **Sharp covers:** large covers are read straight from the picture embedded in the file, at full size
@@ -35,7 +37,7 @@ No streaming, no accounts, no network permission. It finds the music on your dev
 - **Album and song themes:** pin a theme to an album, or to a single song, and the whole app wears it while that plays. A song's own theme wins over its album's
 - **Liner notes:** a private note on a song or album, shown softly on Now Playing
 - **Listening history,** kept on the phone and nowhere else
-- **Your Aura:** what your listening says about you, worked out on the phone: the era you're in (the album that took over your month), time in hype inside your Moments, your most played songs and artists, past eras, and what played on this day in earlier years. Share it as a full-HD card drawn in your own theme, through the share sheet, with no internet involved
+- **Your Aura:** a rank you earn each month by minutes listened, each with its own emblem, from Static up to The Aura Farmer, back to Static on the 1st (stay there over a week and you're Larper Larry). Below it, what your listening says about you, worked out on the phone: past months' ranks and eras, time in hype inside your Moments, your most played songs and artists, and what played on this day in earlier years. Share it as a full-HD card drawn in your own theme, through the share sheet, with no internet involved
 
 ## Tech stack
 
