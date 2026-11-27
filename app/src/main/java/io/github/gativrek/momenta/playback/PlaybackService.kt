@@ -134,6 +134,11 @@ class PlaybackService : MediaSessionService() {
                 .setWakeMode(C.WAKE_MODE_LOCAL)
                 .build()
         player = QueuePlayer(exoPlayer)
+        // Shuffle leans toward songs not heard in a while.
+        val lastPlayed = container.lastPlayed
+        player.shuffleWeight = { item ->
+            ShuffleWeights.weight(MediaItemMapper.trackId(item)?.let(lastPlayed.value::get), System.currentTimeMillis())
+        }
 
         // Tapping the notification (or the lock-screen player) opens the app.
         val openApp =
@@ -253,7 +258,8 @@ class PlaybackService : MediaSessionService() {
                 .mapNotNull { i ->
                     val old = exo.getMediaItemAt(i)
                     val track = MediaItemMapper.trackId(old)?.let(library::get) ?: return@mapNotNull null
-                    val fresh = MediaItemMapper.toMediaItem(track, MediaItemMapper.isReel(old))
+                    val fresh =
+                        MediaItemMapper.toMediaItem(track, MediaItemMapper.isReel(old), MediaItemMapper.isEncore(old))
                     if (MediaItemMapper.isOutdated(old, fresh)) i to fresh else null
                 }.toMap()
         if (updates.isEmpty()) return
@@ -594,6 +600,7 @@ class PlaybackService : MediaSessionService() {
                         finishTrack = args.getBoolean(SessionProtocol.ARG_FINISH_TRACK),
                     )
                 SessionProtocol.CANCEL_SLEEP_TIMER.customAction -> sleepTimer.cancel()
+                SessionProtocol.TOGGLE_ENCORE.customAction -> player.toggleEncore()
                 SessionProtocol.SAVE_MOMENT.customAction -> {
                     // From our UI the screen shows what happened; from the notification, a toast says so.
                     val fromNotification = session.isMediaNotificationController(controller)

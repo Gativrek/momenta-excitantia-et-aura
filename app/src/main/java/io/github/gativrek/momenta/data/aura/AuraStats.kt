@@ -61,7 +61,14 @@ data class AuraProfile(
     val topSongs: List<SongTotal> = emptyList(),
     val topArtists: List<ArtistTotal> = emptyList(),
     val onThisDay: List<OnThisDay> = emptyList(),
+    /** This calendar month so far, and the rank it has reached. */
+    val thisMonth: MonthRank = MonthRank(YearMonth.of(1970, 1), 0, AuraRanks.LADDER.first()),
+    /** Earlier months with any listening, newest first, each with its rank and era. */
+    val pastMonths: List<MonthRank> = emptyList(),
 ) {
+    /** The highest rank any month has reached, this one included. */
+    val bestRank: AuraRank get() = (pastMonths.map { it.rank } + thisMonth.rank).maxBy { it.tier }
+
     val isEmpty: Boolean get() = totalListenedMs == 0L
 }
 
@@ -84,8 +91,18 @@ object AuraStats {
         now: Long,
         zone: ZoneId,
     ): AuraProfile {
-        if (listens.isEmpty()) return AuraProfile()
+        val currentMonth = YearMonth.from(date(now, zone))
+        if (listens.isEmpty()) {
+            return AuraProfile(thisMonth = MonthRank(currentMonth, 0, AuraRanks.LADDER.first()))
+        }
         val windowStart = now - ERA_WINDOW_DAYS * DAY_MS
+        val byMonth = listens.groupBy { YearMonth.from(date(it.startedAt, zone)) }
+
+        fun monthRank(month: YearMonth): MonthRank {
+            val inMonth = byMonth[month].orEmpty()
+            val ms = inMonth.sumOf { it.listenedMs }
+            return MonthRank(month, ms, AuraRanks.rankFor(ms), eraOf(inMonth))
+        }
         return AuraProfile(
             totalListenedMs = listens.sumOf { it.listenedMs },
             songsHeard = listens.distinctBy { it.songId }.size,
@@ -99,6 +116,8 @@ object AuraStats {
             topSongs = songTotals(listens).take(TOP_SONGS),
             topArtists = artistTotals(listens).take(TOP_ARTISTS),
             onThisDay = onThisDay(listens, date(now, zone), zone),
+            thisMonth = monthRank(currentMonth),
+            pastMonths = byMonth.keys.filter { it < currentMonth }.sortedDescending().map(::monthRank),
         )
     }
 

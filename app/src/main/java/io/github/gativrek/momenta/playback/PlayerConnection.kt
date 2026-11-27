@@ -51,6 +51,8 @@ data class PlayerUiState(
     val shuffle: Boolean = false,
     val repeatMode: Int = Player.REPEAT_MODE_OFF,
     val sleepTimer: SleepTimerState? = null,
+    /** An Encore of this song is waiting right after it. */
+    val encore: Boolean = false,
 )
 
 /** One row of the queue screen. */
@@ -61,12 +63,16 @@ data class QueueEntry(
     val playPosition: Int,
     val nowPlaying: NowPlaying,
     val durationMs: Long,
+    /** This entry is an Encore: the song before it, once more. */
+    val encore: Boolean = false,
 )
 
-/** The current track and what plays after it, in play order (shuffle-aware). */
+/** The current track, what played before it and what plays after it, in play order (shuffle-aware). */
 data class QueueState(
     val current: QueueEntry? = null,
     val upcoming: List<QueueEntry> = emptyList(),
+    /** Earlier in play order: what has played in this queue, oldest first. */
+    val history: List<QueueEntry> = emptyList(),
 )
 
 /**
@@ -79,6 +85,8 @@ data class QueueState(
  */
 class PlayerConnection(
     context: Context,
+    /** When each track was last heard, by track ID: what "Shuffle all" leans on. */
+    private val lastPlayed: () -> Map<Long, Long> = { emptyMap() },
 ) {
     private val appContext = context.applicationContext
     private var controllerFuture: ListenableFuture<MediaController>? = null
@@ -165,9 +173,13 @@ class PlayerConnection(
     /**
      * "Shuffle all": a shuffled copy of [tracks], played from the top. The queue itself is
      * shuffled, so every track plays exactly once and the queue reads in play order, whether
-     * or not the shuffle toggle is on.
+     * or not the shuffle toggle is on. Songs not heard in a while tend to come first.
      */
-    fun shuffleTracks(tracks: List<Track>) = playTracks(tracks.shuffled(), 0)
+    fun shuffleTracks(tracks: List<Track>) {
+        val last = lastPlayed()
+        val now = System.currentTimeMillis()
+        playTracks(ShuffleWeights.shuffled(tracks) { ShuffleWeights.weight(last[it.id], now) }, 0)
+    }
 
     /** Replace the queue with [tracks] and start playing at [startIndex], [startPositionMs] into it. */
     fun playTracks(
@@ -263,6 +275,9 @@ class PlayerConnection(
 
     fun cancelSleepTimer() = send(SessionProtocol.CANCEL_SLEEP_TIMER, Bundle.EMPTY)
 
+    /** Play this song once more before moving on, or take that back. */
+    fun toggleEncore() = send(SessionProtocol.TOGGLE_ENCORE, Bundle.EMPTY)
+
     /**
      * Playback position, polled while collected. Kept out of [state] so only the views that
      * show a seek bar recompose twice a second, not everything observing the player.
@@ -335,6 +350,7 @@ class PlayerConnection(
                 shuffle = player.shuffleModeEnabled,
                 repeatMode = player.repeatMode,
                 sleepTimer = sleepTimer,
+                encore = QueuePlayer.encoreAfterCurrent(player) != null,
             )
     }
 
@@ -354,12 +370,14 @@ class PlayerConnection(
                 playPosition = playPosition,
                 nowPlaying = nowPlaying(item),
                 durationMs = item.mediaMetadata.durationMs ?: 0L,
+                encore = MediaItemMapper.isEncore(item),
             )
         }
         _queue.value =
             QueueState(
                 current = entry(currentPosition),
                 upcoming = (currentPosition + 1 until order.size).map(::entry),
+                history = (0 until currentPosition).map(::entry),
             )
     }
 

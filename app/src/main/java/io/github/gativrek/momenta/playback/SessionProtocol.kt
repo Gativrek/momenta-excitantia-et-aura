@@ -31,7 +31,13 @@ object SessionProtocol {
      */
     val SAVE_MOMENT = SessionCommand(PREFIX + "SAVE_MOMENT", Bundle.EMPTY)
 
-    val ALL = listOf(PLAY_NEXT, ADD_TO_QUEUE, MOVE, SET_SLEEP_TIMER, CANCEL_SLEEP_TIMER, SAVE_MOMENT)
+    /**
+     * Encore: the current song plays once more before the queue moves on. Sent again while
+     * the Encore is still waiting, it takes it back.
+     */
+    val TOGGLE_ENCORE = SessionCommand(PREFIX + "TOGGLE_ENCORE", Bundle.EMPTY)
+
+    val ALL = listOf(PLAY_NEXT, ADD_TO_QUEUE, MOVE, SET_SLEEP_TIMER, CANCEL_SLEEP_TIMER, SAVE_MOMENT, TOGGLE_ENCORE)
 
     const val ARG_ITEMS = "items"
     const val ARG_FROM = "from"

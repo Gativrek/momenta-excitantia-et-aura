@@ -17,6 +17,7 @@ import io.github.gativrek.momenta.data.sorting.SortingRepository
 import io.github.gativrek.momenta.data.tags.TagWriter
 import io.github.gativrek.momenta.playback.PlaybackStateStore
 import io.github.gativrek.momenta.playback.PlayerConnection
+import io.github.gativrek.momenta.playback.ShuffleWeights
 import io.github.gativrek.momenta.ui.theme.ThemeSpec
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,6 +26,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.plus
@@ -129,7 +131,15 @@ class AppContainer(
     }
 
     /** Connected/disconnected by MainActivity's onStart/onStop. */
-    val playerConnection: PlayerConnection by lazy { PlayerConnection(appContext) }
+    val playerConnection: PlayerConnection by lazy { PlayerConnection(appContext) { lastPlayed.value } }
+
+    /** When each track in the library was last heard, by track ID: what shuffle leans on. */
+    val lastPlayed: StateFlow<Map<Long, Long>> by lazy {
+        combine(libraryRepository.tracks, database.listeningDao().observePlays()) { tracks, plays ->
+            ShuffleWeights.lastPlayed(tracks, plays)
+        }.flowOn(Dispatchers.Default)
+            .stateIn(applicationScope, SharingStarted.Eagerly, emptyMap())
+    }
 
     /** Themes pinned to albums. Backed up with the other settings. */
     val themePins: ThemePinsStore by lazy {

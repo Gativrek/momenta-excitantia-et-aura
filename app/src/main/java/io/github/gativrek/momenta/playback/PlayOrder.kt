@@ -37,16 +37,25 @@ object PlayOrder {
 
     /**
      * A fresh shuffle of [count] items that starts with [first], so turning shuffle on (or
-     * starting a list with shuffle on) still plays everything after the current track.
+     * starting a list with shuffle on) still plays everything after the current track. With
+     * [weights] (one per item), heavier items tend to come up sooner (see [ShuffleWeights]).
      */
     fun shuffledStartingWith(
         first: Int,
         count: Int,
         random: Random = Random,
+        weights: DoubleArray? = null,
     ): List<Int> {
         if (count <= 0) return emptyList()
         val head = first.coerceIn(0, count - 1)
-        return listOf(head) + (0 until count).filter { it != head }.shuffled(random)
+        val rest = (0 until count).filter { it != head }
+        val shuffled =
+            if (weights != null && weights.size == count) {
+                ShuffleWeights.shuffled(rest, random) { weights[it] }
+            } else {
+                rest.shuffled(random)
+            }
+        return listOf(head) + shuffled
     }
 
     /**

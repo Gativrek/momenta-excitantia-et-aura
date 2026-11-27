@@ -121,6 +121,7 @@ fun NowPlayingScreen(
         onSeek = viewModel::seekTo,
         onToggleShuffle = viewModel::toggleShuffle,
         onCycleRepeat = viewModel::cycleRepeat,
+        onToggleEncore = viewModel::toggleEncore,
         onOpenSleepTimer = { showSleepTimer = true },
         onOpenQueue = onOpenQueue,
         onSaveMoment = { viewModel.saveMoment { id -> justSaved = id } },
@@ -178,6 +179,7 @@ fun NowPlayingContent(
     onSeek: (Long) -> Unit,
     onToggleShuffle: () -> Unit,
     onCycleRepeat: () -> Unit,
+    onToggleEncore: () -> Unit,
     onOpenSleepTimer: () -> Unit,
     onOpenQueue: () -> Unit,
     onSaveMoment: () -> Unit,
@@ -319,6 +321,21 @@ fun NowPlayingContent(
                                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                             )
                         }
+                    }
+                    // Encore: once more before the next song. Lit while it's waiting.
+                    IconButton(onClick = onToggleEncore, modifier = Modifier.size(48.dp)) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_encore),
+                            contentDescription =
+                                stringResource(if (state.encore) R.string.action_encore_on else R.string.action_encore),
+                            tint =
+                                if (state.encore) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                },
+                            modifier = Modifier.size(28.dp),
+                        )
                     }
                     IconButton(onClick = onSaveMoment, modifier = Modifier.size(56.dp)) {
                         Icon(

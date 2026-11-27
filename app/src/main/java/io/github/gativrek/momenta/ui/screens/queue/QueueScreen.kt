@@ -25,6 +25,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -74,18 +75,21 @@ fun QueueScreen(
     }
 }
 
-/** An upcoming entry with a key that survives reordering (the same track may be queued twice). */
+/** An entry with a key that survives reordering (the same track may be queued twice). */
 private data class Row(
     val key: String,
     val entry: QueueEntry,
 )
 
-private fun rowsOf(entries: List<QueueEntry>): List<Row> {
+private fun rowsOf(
+    entries: List<QueueEntry>,
+    prefix: String = "row",
+): List<Row> {
     val seen = HashMap<Long?, Int>()
     return entries.map { entry ->
         val id = entry.nowPlaying.trackId
         val occurrence = seen.merge(id, 1, Int::plus)
-        Row(key = "row:$id:$occurrence", entry = entry)
+        Row(key = "$prefix:$id:$occurrence", entry = entry)
     }
 }
 
@@ -99,7 +103,9 @@ fun QueueContent(
     onSaveAsPlaylist: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val listState = rememberLazyListState()
+    // Opens on "Now playing"; what already played is above it, a scroll up away.
+    val listState =
+        rememberLazyListState(initialFirstVisibleItemIndex = if (queue.history.isEmpty()) 0 else queue.history.size + 1)
     val scope = rememberCoroutineScope()
     val reorder = remember { ReorderState<Row> { it.key } }
 
@@ -126,6 +132,20 @@ fun QueueContent(
             },
         )
         LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
+            if (queue.history.isNotEmpty()) {
+                item(key = "played-title", contentType = "section") {
+                    SectionTitle(stringResource(R.string.queue_played))
+                }
+                items(rowsOf(queue.history, prefix = "played"), key = { it.key }, contentType = { "row" }) { row ->
+                    QueueRow(
+                        entry = row.entry,
+                        highlighted = false,
+                        played = true,
+                        onClick = { onJump(row.entry.itemIndex) },
+                        modifier = Modifier.animateItem(),
+                    )
+                }
+            }
             item(key = "now-title", contentType = "section") {
                 SectionTitle(stringResource(R.string.queue_now_playing))
             }
@@ -190,10 +210,14 @@ private fun QueueRow(
     entry: QueueEntry,
     highlighted: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
     elevated: Boolean = false,
+    /** Already heard: dimmed, above "Now playing". */
+    played: Boolean = false,
     dragHandle: (@Composable () -> Unit)? = null,
 ) {
     Surface(
+        modifier = if (played) modifier.alpha(PLAYED_ALPHA) else modifier,
         color =
             when {
                 highlighted -> MaterialTheme.colorScheme.secondaryContainer
@@ -218,8 +242,9 @@ private fun QueueRow(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
+                val artist = entry.nowPlaying.artist ?: stringResource(R.string.unknown_artist)
                 Text(
-                    text = entry.nowPlaying.artist ?: stringResource(R.string.unknown_artist),
+                    text = if (entry.encore) stringResource(R.string.queue_encore) + " · " + artist else artist,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
@@ -245,3 +270,5 @@ private fun SectionTitle(text: String) {
         modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp),
     )
 }
+
+private const val PLAYED_ALPHA = 0.6f

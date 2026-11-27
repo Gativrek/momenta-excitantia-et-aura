@@ -18,17 +18,41 @@ object MediaItemMapper {
     /** Set on items queued by Moments mode: the service plays only their Moments. */
     private const val EXTRA_REEL = "io.github.gativrek.momenta.REEL"
 
+    /** Set on the copy Encore queues right after a song: the song once more. */
+    private const val EXTRA_ENCORE = "io.github.gativrek.momenta.ENCORE"
+
     /** mediaId = MediaStore `_ID`, the one ID every layer shares. The URI is set too, for in-process use. */
     fun toMediaItem(
         track: Track,
         reel: Boolean = false,
+        encore: Boolean = false,
     ): MediaItem =
         MediaItem
             .Builder()
             .setMediaId(track.id.toString())
             .setUri(track.contentUri())
-            .setMediaMetadata(toMetadata(track, reel))
+            .setMediaMetadata(toMetadata(track, reel, encore))
             .build()
+
+    /** Whether [item] is an Encore copy. */
+    fun isEncore(item: MediaItem?): Boolean =
+        item
+            ?.mediaMetadata
+            ?.extras
+            ?.getBoolean(EXTRA_ENCORE) == true
+
+    /** [item] once more, marked as its Encore. Moments mode carries over. */
+    fun encoreOf(item: MediaItem): MediaItem {
+        val extras = Bundle(item.mediaMetadata.extras ?: Bundle.EMPTY).apply { putBoolean(EXTRA_ENCORE, true) }
+        return item
+            .buildUpon()
+            .setMediaMetadata(
+                item.mediaMetadata
+                    .buildUpon()
+                    .setExtras(extras)
+                    .build(),
+            ).build()
+    }
 
     /** Whether [item] was queued by Moments mode. */
     fun isReel(item: MediaItem?): Boolean =
@@ -45,6 +69,7 @@ object MediaItemMapper {
     fun toMetadata(
         track: Track,
         reel: Boolean = false,
+        encore: Boolean = false,
     ): MediaMetadata =
         MediaMetadata
             .Builder()
@@ -63,6 +88,7 @@ object MediaItemMapper {
                     putLong(EXTRA_ALBUM_ID, track.albumId)
                     putLong(EXTRA_SIZE, track.sizeBytes)
                     if (reel) putBoolean(EXTRA_REEL, true)
+                    if (encore) putBoolean(EXTRA_ENCORE, true)
                 },
             ).build()
 

@@ -105,6 +105,8 @@ class PlayerViewModel(
 
     fun cancelSleepTimer() = connection.cancelSleepTimer()
 
+    fun toggleEncore() = connection.toggleEncore()
+
     /** ⚡: a Moment at the current position. [onSaved] gets its ID, to offer the lightning-gear. */
     fun saveMoment(onSaved: (Long) -> Unit) {
         viewModelScope.launch { connection.saveMoment()?.let(onSaved) }

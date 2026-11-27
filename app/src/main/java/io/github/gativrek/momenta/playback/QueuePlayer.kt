@@ -1,8 +1,10 @@
 package io.github.gativrek.momenta.playback
 
 import androidx.annotation.OptIn
+import androidx.media3.common.C
 import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.ShuffleOrder.DefaultShuffleOrder
@@ -74,6 +76,21 @@ class QueuePlayer(
         }
     }
 
+    /**
+     * Encore: a copy of the current song right after it in play order, so it plays once more
+     * and then the queue carries on. If that copy is already waiting, it's taken back out.
+     */
+    fun toggleEncore() {
+        val p = exoPlayer
+        val current = p.currentMediaItem ?: return
+        val next = encoreAfterCurrent(p)
+        if (next != null) {
+            p.removeMediaItem(next)
+        } else {
+            insert(listOf(MediaItemMapper.encoreOf(current)), playNext = true)
+        }
+    }
+
     /** Drag-to-reorder in the queue screen, from one play position to another. */
     fun moveInPlayOrder(
         from: Int,
@@ -90,6 +107,9 @@ class QueuePlayer(
         }
     }
 
+    /** Shuffle weighting, item by item, for [reshuffleFromCurrent]. Set by the service. */
+    var shuffleWeight: (MediaItem) -> Double = { 1.0 }
+
     /** Replace the shuffle order with [order] (item indices in play order). */
     fun setPlayOrder(order: List<Int>) {
         if (order.size != exoPlayer.mediaItemCount) return
@@ -103,6 +123,25 @@ class QueuePlayer(
     private fun reshuffleFromCurrent() {
         val count = exoPlayer.mediaItemCount
         if (count == 0) return
-        setPlayOrder(PlayOrder.shuffledStartingWith(exoPlayer.currentMediaItemIndex, count))
+        val weights = DoubleArray(count) { shuffleWeight(exoPlayer.getMediaItemAt(it)) }
+        setPlayOrder(PlayOrder.shuffledStartingWith(exoPlayer.currentMediaItemIndex, count, weights = weights))
+    }
+
+    companion object {
+        /**
+         * The item index of the current song's Encore, if one is waiting right after it in
+         * play order, else null.
+         */
+        fun encoreAfterCurrent(player: Player): Int? {
+            val current = player.currentMediaItemIndex
+            if (current == C.INDEX_UNSET || player.currentTimeline.isEmpty) return null
+            val next =
+                player.currentTimeline.getNextWindowIndex(current, Player.REPEAT_MODE_OFF, player.shuffleModeEnabled)
+            if (next == C.INDEX_UNSET) return null
+            val item = player.getMediaItemAt(next)
+            return next.takeIf {
+                MediaItemMapper.isEncore(item) && item.mediaId == player.currentMediaItem?.mediaId
+            }
+        }
     }
 }

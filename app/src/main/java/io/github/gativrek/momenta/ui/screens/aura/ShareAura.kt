@@ -109,6 +109,7 @@ private fun AuraCard(
     hypeMs: Long,
     topMoment: SavedMoment?,
 ) {
+    val month = profile.thisMonth
     val era = profile.currentEra
     Box(modifier = Modifier.fillMaxWidth().aspectRatio(CARD_RATIO).clip(MaterialTheme.shapes.large)) {
         ThemeBackdrop(LocalThemeSpec.current, Modifier.matchParentSize())
@@ -129,20 +130,29 @@ private fun AuraCard(
             }
             Spacer(Modifier.height(16.dp))
             Text(
-                text = stringResource(if (era != null) R.string.aura_card_era_lead else R.string.aura_card_no_era_lead),
+                text = stringResource(R.string.aura_card_rank_lead, monthName(month.month)),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
-                text = era?.let { stringResource(R.string.aura_era, it.name) } ?: stringResource(R.string.aura_no_era),
+                text = rankName(month.rank),
                 style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.primary,
-                maxLines = 3,
+                color = rankColor(month.rank),
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
+            if (era != null) {
+                Text(
+                    text = stringResource(R.string.aura_era, era.name),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
             Spacer(Modifier.height(16.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-                CardStat(formatSpan(profile.totalListenedMs), stringResource(R.string.aura_stat_listened))
+                CardStat(formatSpan(month.listenedMs), stringResource(R.string.aura_card_month))
                 if (hypeMs > 0) CardStat(formatSpan(hypeMs), stringResource(R.string.aura_card_hype), accent = true)
             }
             Spacer(Modifier.height(16.dp))

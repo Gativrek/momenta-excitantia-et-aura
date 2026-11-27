@@ -54,6 +54,8 @@
     <string name="action_repeat_off">Repeat off</string>
     <string name="action_repeat_all">Repeat all</string>
     <string name="action_repeat_one">Repeat one</string>
+    <string name="action_encore">Encore: once more before the next song</string>
+    <string name="action_encore_on">Encore on. Tap to take it back</string>
     <string name="action_queue">Queue</string>
     <string name="action_more">More options</string>
     <string name="action_play_next">Play next</string>
@@ -61,7 +63,9 @@
     <string name="action_reorder">Drag to reorder</string>
     <string name="toast_play_next">Playing next</string>
     <string name="toast_added_to_queue">Added to queue</string>
+    <string name="queue_played">Played</string>
     <string name="queue_now_playing">Now playing</string>
+    <string name="queue_encore">Encore</string>
     <string name="queue_up_next">Up next</string>
     <string name="queue_empty_upcoming">Nothing after this track.</string>
     <string name="action_removed">Removed</string>
@@ -234,12 +238,31 @@
     <string name="aura_title">Your Aura</string>
     <string name="aura_share">Share your Aura</string>
     <string name="aura_share_action">Share</string>
-    <string name="aura_era_lead">You’re in</string>
     <string name="aura_era">the %1$s era</string>
-    <string name="aura_era_detail">%1$s · %2$d%% of your listening this past month</string>
-    <string name="aura_no_era_lead">Your era</string>
-    <string name="aura_no_era">Still forming</string>
-    <string name="aura_no_era_detail">Once one album takes over your listening, this becomes its era.</string>
+    <!-- The Aura ladder, bottom to top. Same order and count as AuraRanks.LADDER. -->
+    <string-array name="aura_ranks">
+        <item>Static</item>
+        <item>Spark</item>
+        <item>Glow</item>
+        <item>Resonance</item>
+        <item>Main Character</item>
+        <item>Overdrive</item>
+        <item>Aura Overflow</item>
+        <item>The Aura Farmer</item>
+    </string-array>
+    <string name="aura_rank_lead">Your Aura in %1$s</string>
+    <string name="aura_rank_listened">%1$s listened this month</string>
+    <string name="aura_rank_to_next">%1$s more for %2$s</string>
+    <string name="aura_rank_top">Top of the ladder. It’s yours until the 1st.</string>
+    <plurals name="aura_rank_resets">
+        <item quantity="one">Back to Static tomorrow</item>
+        <item quantity="other">Back to Static in %d days</item>
+    </plurals>
+    <string name="aura_ladder">The ladder</string>
+    <string name="aura_ladder_hours">%1$d h a month</string>
+    <string name="aura_ladder_start">Where every month starts</string>
+    <string name="aura_ladder_you">You’re here</string>
+    <string name="aura_past_months">Past months</string>
     <string name="aura_stat_listened">listening</string>
     <plurals name="aura_stat_songs">
         <item quantity="one">song heard</item>
@@ -248,7 +271,6 @@
     <string name="aura_top_moments">Moments you keep hearing</string>
     <string name="aura_top_songs">Most played</string>
     <string name="aura_top_artists">Top artists</string>
-    <string name="aura_eras">Your eras</string>
     <string name="aura_on_this_day">On this day</string>
     <plurals name="aura_years_ago">
         <item quantity="one">A year ago today</item>
@@ -259,8 +281,8 @@
     <string name="aura_empty_body">Play some music. What you listen to, and how, shows up here.</string>
     <string name="aura_card_title">My Aura</string>
     <string name="aura_card_hype">in hype</string>
-    <string name="aura_card_era_lead">I’m in</string>
-    <string name="aura_card_no_era_lead">My era</string>
+    <string name="aura_card_rank_lead">My Aura in %1$s</string>
+    <string name="aura_card_month">this month</string>
     <plurals name="aura_card_moment_heard">
         <item quantity="one">my top Moment · heard once</item>
         <item quantity="other">my top Moment · heard %d times</item>
