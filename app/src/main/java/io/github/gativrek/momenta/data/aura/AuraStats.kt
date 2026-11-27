@@ -91,9 +91,16 @@ object AuraStats {
         now: Long,
         zone: ZoneId,
     ): AuraProfile {
-        val currentMonth = YearMonth.from(date(now, zone))
+        val today = date(now, zone)
+        val currentMonth = YearMonth.from(today)
+        // Static since the 1st for more than a week, or a whole earlier month at Static.
+        fun larry(
+            month: YearMonth,
+            rank: AuraRank,
+        ) = rank.tier == 0 && (month != currentMonth || today.dayOfMonth > AuraRanks.LARRY_AFTER_DAYS)
         if (listens.isEmpty()) {
-            return AuraProfile(thisMonth = MonthRank(currentMonth, 0, AuraRanks.LADDER.first()))
+            val bottom = AuraRanks.LADDER.first()
+            return AuraProfile(thisMonth = MonthRank(currentMonth, 0, bottom, larry = larry(currentMonth, bottom)))
         }
         val windowStart = now - ERA_WINDOW_DAYS * DAY_MS
         val byMonth = listens.groupBy { YearMonth.from(date(it.startedAt, zone)) }
@@ -101,7 +108,8 @@ object AuraStats {
         fun monthRank(month: YearMonth): MonthRank {
             val inMonth = byMonth[month].orEmpty()
             val ms = inMonth.sumOf { it.listenedMs }
-            return MonthRank(month, ms, AuraRanks.rankFor(ms), eraOf(inMonth))
+            val rank = AuraRanks.rankFor(ms)
+            return MonthRank(month, ms, rank, eraOf(inMonth), larry(month, rank))
         }
         return AuraProfile(
             totalListenedMs = listens.sumOf { it.listenedMs },

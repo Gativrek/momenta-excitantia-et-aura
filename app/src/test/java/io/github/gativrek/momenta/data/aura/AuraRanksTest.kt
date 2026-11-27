@@ -81,4 +81,21 @@ class AuraRanksTest {
         assertEquals(0, profile.thisMonth.rank.tier)
         assertEquals(AuraRanks.TOP, profile.bestRank)
     }
+
+    @Test
+    fun `a week at Static makes you Larper Larry`() {
+        val early = AuraStats.profile(emptyList(), at(2026, 11, 7), zone)
+        assertEquals(false, early.thisMonth.larry)
+        val late = AuraStats.profile(listOf(listen(at(2026, 11, 2), 20)), at(2026, 11, 8), zone)
+        assertEquals(true, late.thisMonth.larry)
+        val climbed = AuraStats.profile(listOf(listen(at(2026, 11, 2), 61)), at(2026, 11, 20), zone)
+        assertEquals(false, climbed.thisMonth.larry)
+    }
+
+    @Test
+    fun `a whole earlier month at Static was a Larry month`() {
+        val listens = listOf(listen(at(2026, 9, 3), 30), listen(at(2026, 10, 3), 90))
+        val months = AuraStats.profile(listens, now, zone).pastMonths
+        assertEquals(listOf(false, true), months.map { it.larry })
+    }
 }

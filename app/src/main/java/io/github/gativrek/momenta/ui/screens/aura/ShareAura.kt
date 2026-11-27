@@ -134,13 +134,17 @@ private fun AuraCard(
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Text(
-                text = rankName(month.rank),
-                style = MaterialTheme.typography.headlineSmall,
-                color = rankColor(month.rank),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = rankName(month.rank, month.larry),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = rankColor(month.rank, month.larry),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+                RankEmblem(month.rank, larry = month.larry, size = 56.dp, modifier = Modifier.padding(start = 8.dp))
+            }
             if (era != null) {
                 Text(
                     text = stringResource(R.string.aura_era, era.name),

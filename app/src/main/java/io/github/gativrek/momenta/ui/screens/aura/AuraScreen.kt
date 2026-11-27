@@ -1,12 +1,11 @@
 package io.github.gativrek.momenta.ui.screens.aura
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -16,7 +15,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,8 +35,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -52,7 +50,6 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import io.github.gativrek.momenta.App
 import io.github.gativrek.momenta.R
 import io.github.gativrek.momenta.data.aura.AuraProfile
-import io.github.gativrek.momenta.data.aura.AuraRank
 import io.github.gativrek.momenta.data.aura.AuraRanks
 import io.github.gativrek.momenta.data.aura.AuraStats
 import io.github.gativrek.momenta.data.aura.MonthRank
@@ -72,12 +69,9 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import java.time.Instant
 import java.time.LocalDate
-import java.time.YearMonth
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
-import java.time.format.TextStyle
-import java.util.Locale
 
 class AuraViewModel(
     private val connection: PlayerConnection,
@@ -175,7 +169,7 @@ fun AuraScreen(
         }
         LazyColumn(modifier = Modifier.padding(padding), contentPadding = PaddingValues(bottom = 32.dp)) {
             item(key = "rank") { RankHero(p.thisMonth) }
-            ladder(p.thisMonth.rank)
+            ladder(p.thisMonth)
             pastMonths(p)
             item(key = "tiles") { StatTiles(p, hypeMs) }
             topMoments(moments.filter { it.moment.heardCount > 0 }.take(TOP_MOMENTS)) {
@@ -207,23 +201,36 @@ private fun RankHero(month: MonthRank) {
     val next = AuraRanks.next(rank)
     val daysToReset = month.month.lengthOfMonth() - LocalDate.now().dayOfMonth + 1
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp)) {
-        Text(
-            text = stringResource(R.string.aura_rank_lead, monthName(month.month)),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            text = rankName(rank),
-            style = MaterialTheme.typography.headlineLarge,
-            color = rankColor(rank),
-            modifier = Modifier.padding(top = 4.dp),
-        )
-        Text(
-            text = stringResource(R.string.aura_rank_listened, formatSpan(month.listenedMs)),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 6.dp),
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.aura_rank_lead, monthName(month.month)),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text = rankName(rank, month.larry),
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = rankColor(rank, month.larry),
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+                Text(
+                    text = stringResource(R.string.aura_rank_listened, formatSpan(month.listenedMs)),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 6.dp),
+                )
+            }
+            RankEmblem(rank, larry = month.larry, size = HERO_EMBLEM, modifier = Modifier.padding(start = 12.dp))
+        }
+        if (month.larry) {
+            Text(
+                text = stringResource(R.string.aura_larry_detail),
+                style = MaterialTheme.typography.bodyMedium,
+                color = rankColor(rank, larry = true),
+                modifier = Modifier.padding(top = 12.dp),
+            )
+        }
         LinearProgressIndicator(
             progress = { AuraRanks.progress(month.listenedMs, rank) },
             color = rankColor(next ?: rank),
@@ -245,6 +252,16 @@ private fun RankHero(month: MonthRank) {
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(top = 8.dp),
         )
+        // Only The Aura Farmer gets told.
+        if (next == null) {
+            Text(
+                text = stringResource(R.string.aura_rank_top_secret),
+                style = MaterialTheme.typography.bodySmall,
+                fontStyle = FontStyle.Italic,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 2.dp),
+            )
+        }
         if (rank.tier > 0) {
             Text(
                 text = pluralStringResource(R.plurals.aura_rank_resets, daysToReset, daysToReset),
@@ -257,31 +274,32 @@ private fun RankHero(month: MonthRank) {
 }
 
 /** Every rank, top first, with what it takes and where you stand. */
-private fun LazyListScope.ladder(current: AuraRank) {
+private fun LazyListScope.ladder(month: MonthRank) {
+    val current = month.rank
     section(R.string.aura_ladder)
     items(AuraRanks.LADDER.reversed(), key = { "ladder-${it.tier}" }) { rank ->
         val reached = rank.tier <= current.tier
         val here = rank == current
+        // Larper Larry stands in for Static while you're him.
+        val larry = here && month.larry
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(
-                modifier =
-                    Modifier
-                        .size(10.dp)
-                        .background(
-                            color = if (reached) rankColor(rank) else MaterialTheme.colorScheme.outlineVariant,
-                            shape = CircleShape,
-                        ),
+            RankEmblem(
+                rank,
+                larry = larry,
+                size = LADDER_EMBLEM,
+                glow = false,
+                tint = if (reached) null else MaterialTheme.colorScheme.outlineVariant,
             )
             Column(modifier = Modifier.weight(1f).padding(horizontal = 16.dp)) {
                 Text(
-                    text = rankName(rank),
+                    text = rankName(rank, larry),
                     style = if (here) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyLarge,
                     color =
                         when {
-                            here -> rankColor(rank)
+                            here -> rankColor(rank, larry)
                             reached -> MaterialTheme.colorScheme.onSurface
                             else -> MaterialTheme.colorScheme.onSurfaceVariant
                         },
@@ -319,28 +337,14 @@ private fun LazyListScope.pastMonths(profile: AuraProfile) {
         val name = monthName(month.month) + " " + month.month.year
         RankRow(
             rank = null,
-            title = rankName(month.rank),
+            title = rankName(month.rank, month.larry),
             subtitle = if (era != null) "$name · $era" else name,
             value = formatSpan(month.listenedMs),
-            titleColor = rankColor(month.rank).takeIf { month.rank.isTop },
+            titleColor = rankColor(month.rank, month.larry).takeIf { month.rank.isTop || month.larry },
+            emblem = { RankEmblem(month.rank, larry = month.larry, size = LADDER_EMBLEM, glow = false) },
         )
     }
 }
-
-/** A rank's name, from the `aura_ranks` array. */
-@Composable
-internal fun rankName(rank: AuraRank): String {
-    val names = stringArrayResource(R.array.aura_ranks)
-    return names.getOrElse(rank.tier) { names.last() }
-}
-
-/** The top rank wears the Moment colour; the rest, the theme accent. */
-@Composable
-internal fun rankColor(rank: AuraRank): Color =
-    if (rank.isTop) MaterialTheme.colorScheme.moment else MaterialTheme.colorScheme.primary
-
-internal fun monthName(month: YearMonth): String =
-    month.month.getDisplayName(TextStyle.FULL_STANDALONE, Locale.getDefault())
 
 @Composable
 private fun StatTiles(
@@ -499,11 +503,16 @@ private fun RankRow(
     subtitle: String?,
     value: String,
     titleColor: Color? = null,
+    emblem: (@Composable () -> Unit)? = null,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        if (emblem != null) {
+            emblem()
+            Spacer(Modifier.width(16.dp))
+        }
         if (rank != null) {
             Text(
                 text = rank.toString(),
@@ -593,4 +602,6 @@ internal fun formatSpan(ms: Long): String {
 }
 
 private const val TOP_MOMENTS = 3
+private val HERO_EMBLEM = 88.dp
+private val LADDER_EMBLEM = 28.dp
 private const val TILE_ALPHA = 0.7f

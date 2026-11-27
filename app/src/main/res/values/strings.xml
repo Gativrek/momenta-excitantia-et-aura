@@ -258,6 +258,9 @@
         <item quantity="one">Back to Static tomorrow</item>
         <item quantity="other">Back to Static in %d days</item>
     </plurals>
+    <string name="aura_rank_larry">Larper Larry</string>
+    <string name="aura_larry_detail">Static for over a week, so you’re Larry now. One hour this month gets you out.</string>
+    <string name="aura_rank_top_secret">Watch out for Larper Larry.</string>
     <string name="aura_ladder">The ladder</string>
     <string name="aura_ladder_hours">%1$d h a month</string>
     <string name="aura_ladder_start">Where every month starts</string>

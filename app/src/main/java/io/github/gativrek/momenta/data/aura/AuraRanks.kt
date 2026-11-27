@@ -23,9 +23,17 @@ data class MonthRank(
     val rank: AuraRank,
     /** The album that stood out that month, if one did. */
     val era: Era? = null,
+    /**
+     * Static for more than [AuraRanks.LARRY_AFTER_DAYS] days: you're Larper Larry, The Aura
+     * Farmer's enemy, until you climb out. A whole month at Static is a Larry month.
+     */
+    val larry: Boolean = false,
 )
 
 object AuraRanks {
+    /** Days at Static before you turn into Larper Larry. */
+    const val LARRY_AFTER_DAYS = 7
+
     /**
      * Minutes per month for each rank, bottom to top. 80 hours a month is about 2 h 40 min a
      * day: a lot, but a long trip with headphones on gets there.
